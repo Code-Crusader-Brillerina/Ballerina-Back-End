@@ -1,0 +1,19 @@
+import Hospital.db;
+import Hospital.utils;
+import Hospital.config;
+
+
+public function register(utils:User user)returns json|error {
+    var exist =db:isEmailExist(user.email);
+    if exist is error {
+        return config:createresponse(false, exist.message(), {});
+    }
+    if exist is true {
+        return config:createresponse(false, "User email already exists.", {});
+    }
+    var newrec =db:insertOneIntoDocument("users",user);
+    if newrec is error {
+        return config:createresponse(false, newrec.message(), {});
+    }
+    return config:createresponse(true, "User registered successfully.", newrec.toJson());
+}
