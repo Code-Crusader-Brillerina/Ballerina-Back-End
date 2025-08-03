@@ -8,12 +8,15 @@ public mongodb:Client mongoClient = checkpanic new (connection = "mongodb://loca
 public string DATABASE="Hospital";
 public string salt="We can won this price.";
 
-public function createresponse(boolean success, string message, json data) returns json {
-    return {
+public function createresponse(boolean success, string message, json data, int statusCode) returns http:Response {
+    http:Response res = new;
+    res.statusCode = statusCode;
+    res.setJsonPayload({
         success: success,
         message: message,
         data: data
-    };
+    });
+    return res;
 }
 
 public function startConfigs() {
