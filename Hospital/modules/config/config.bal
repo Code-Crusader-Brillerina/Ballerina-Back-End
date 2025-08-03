@@ -6,6 +6,7 @@ import ballerinax/mongodb;
 public listener http:Listener serverListener = new (8080);
 public mongodb:Client mongoClient = checkpanic new (connection = "mongodb://localhost:27017");
 public string DATABASE="Hospital";
+public string salt="We can won this price.";
 
 public function createresponse(boolean success, string message, json data) returns json {
     return {

@@ -1,7 +1,7 @@
 import Hospital.db;
 import Hospital.utils;
 import Hospital.config;
-
+import Hospital.functions;
 
 public function register(utils:User user)returns json|error {
     var exist =db:isEmailExist(user.email);
@@ -11,6 +11,7 @@ public function register(utils:User user)returns json|error {
     if exist is true {
         return config:createresponse(false, "User email already exists.", {});
     }
+    user.pasword=functions:hashPassword(user.pasword);
     var newrec =db:insertOneIntoDocument("users",user);
     if newrec is error {
         return config:createresponse(false, newrec.message(), {});
