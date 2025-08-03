@@ -17,3 +17,19 @@ public function register(utils:User user)returns json|error {
     }
     return config:createresponse(true, "User registered successfully.", newrec.toJson());
 }
+
+public function login(utils:UserLogin user)returns json|error {
+    var document =db:getUser(user.email);
+    if document is error {
+        return config:createresponse(false, document.message(), {});
+    }
+    if document is null {
+        return config:createresponse(false, "Please register first.", {});
+    }
+    if document.pasword != user.pasword {
+        return config:createresponse(false, "Invalid Password.", {});
+    }
+    // create jwt token
+    // return config:createresponse(true, "User registered successfully.", newrec.toJson());
+    return config:createresponse(true, "User login successfully.", user.toJson());
+}

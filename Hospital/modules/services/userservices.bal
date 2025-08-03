@@ -11,6 +11,9 @@ service /user on config:serverListener {
     resource function post register(@http:Payload utils:User user) returns json|error {
         return routes:register(user);
     }
+    resource function post login(@http:Payload utils:UserLogin user) returns json|error {
+        return routes:login(user);
+    }
 }
 public function startServices()  {
     io:println("Start services.");
