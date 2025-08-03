@@ -27,7 +27,7 @@ public function login(utils:UserLogin user)returns json|error {
     if document is null {
         return config:createresponse(false, "Please register first.", {});
     }
-    if document.pasword != user.pasword {
+    if document.pasword != functions:hashPassword(user.pasword) {
         return config:createresponse(false, "Invalid Password.", {});
     }
     // create jwt token
