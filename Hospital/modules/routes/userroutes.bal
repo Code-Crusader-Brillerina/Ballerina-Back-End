@@ -1,4 +1,5 @@
 import ballerina/http;
+
 import Hospital.db;
 import Hospital.utils;
 import Hospital.config;
@@ -35,6 +36,10 @@ public function login(utils:UserLogin user) returns http:Response|error {
         return config:createresponse(false, "Invalid password.", {}, http:STATUS_UNAUTHORIZED);
     }
 
-    // Optional: generate and return a JWT token here
-    return config:createresponse(true, "User login successful.", user.toJson(), http:STATUS_OK);
+    var token=functions:crateJWT(document);
+    if token is error {
+        return config:createresponse(false, "Error creating JWT.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    http:Cookie cookie = new ("JWT", token, path = "/");
+    return config:createresponse(true, "User login successful.", user.toJson(), http:STATUS_OK,cookie);
 }

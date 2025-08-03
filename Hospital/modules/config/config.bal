@@ -1,6 +1,7 @@
 import ballerina/http;
 import ballerina/io;
 import ballerinax/mongodb;
+import ballerina/jwt;
 
 
 public listener http:Listener serverListener = new (8080);
@@ -8,16 +9,44 @@ public mongodb:Client mongoClient = checkpanic new (connection = "mongodb://loca
 public string DATABASE="Hospital";
 public string salt="We can won this price.";
 
-public function createresponse(boolean success, string message, json data, int statusCode) returns http:Response {
+public function createresponse(boolean success, string message, json data, int statusCode, http:Cookie? cookie = ()) returns http:Response {
     http:Response res = new;
     res.statusCode = statusCode;
-    res.setJsonPayload({
+    res.setPayload({
         success: success,
         message: message,
         data: data
     });
+
+    if cookie is http:Cookie {
+        res.addCookie(cookie);
+    }
+
     return res;
 }
+
+public jwt:IssuerConfig jwtIssuerConfig = {
+    username: "ballerina",
+    issuer: "ballerina",
+    audience: ["ballerina.io"],
+    signatureConfig: {
+        config: {
+            keyFile: "resources/jwt/private.key"
+        }
+    },
+    expTime: 3600
+};
+
+
+public jwt:ValidatorConfig jwtValidatorConfig = {
+    issuer: "ballerina",
+    audience: ["ballerina.io"],
+    signatureConfig: {
+        certFile: "resources/jwt/public.crt"
+    },
+    clockSkew: 60
+};
+
 
 public function startConfigs() {
     io:println("Start configs.");
