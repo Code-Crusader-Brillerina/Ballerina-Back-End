@@ -59,7 +59,7 @@ public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Re
     if issent is error{
         return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    var newvalue = db:insertOneIntoCollection("otp", {"otp":OTP,"email":forgetPBody.email});
+    var newvalue = db:insertOneIntoDocument("users",{"otp":OTP},{"email":forgetPBody.email});
     if newvalue is error{
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }

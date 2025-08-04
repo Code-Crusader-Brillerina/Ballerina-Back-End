@@ -1,5 +1,7 @@
-import Hospital.config;
 import ballerinax/mongodb;
+import ballerina/io;
+
+import Hospital.config;
 
 public function getDBCollection(string collectionName) returns mongodb:Collection|error {
     mongodb:Database db = check config:mongoClient->getDatabase(config:DATABASE);
@@ -43,3 +45,21 @@ public function insertOneIntoCollection(string collectionName,record {} data) re
     }
     return data;
 }
+
+public function insertOneIntoDocument(string collectionName, map<json> data, map<json> filter) returns record {}|error {
+    var collection = getDBCollection(collectionName);
+    if collection is error {
+        return error("Failed to get the connection with the database.");
+    }
+    mongodb:Collection resultCollection = collection;
+
+    mongodb:Update update = {"set": data };
+
+    var insertResult = resultCollection->updateOne(filter, update);
+    if insertResult is error {
+        return error("Failed inserting the document.");
+    }
+    return data;
+}
+
+
