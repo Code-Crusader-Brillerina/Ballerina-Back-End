@@ -1,4 +1,5 @@
 import ballerinax/mongodb;
+// import ballerina/io;
 
 import Hospital.config;
 
@@ -45,7 +46,7 @@ public function insertOneIntoCollection(string collectionName,record {} data) re
     return data;
 }
 
-public function insertOneIntoDocument(string collectionName, map<json> data, map<json> filter) returns record {}|error {
+public function updateOneIntoDocument(string collectionName, map<json> filter, map<json> data) returns record {}|error {
     var collection = getDBCollection(collectionName);
     if collection is error {
         return error("Failed to get the connection with the database.");
@@ -53,6 +54,21 @@ public function insertOneIntoDocument(string collectionName, map<json> data, map
     mongodb:Collection resultCollection = collection;
 
     mongodb:Update update = {"set": data };
+    var insertResult = resultCollection->updateOne(filter, update);
+    if insertResult is error {
+        return error("Failed inserting the document.");
+    }
+    return data;
+}
+
+public function removeOneFromDocument(string collectionName, map<json> filter, map<json> data) returns record {}|error {
+    var collection = getDBCollection(collectionName);
+    if collection is error {
+        return error("Failed to get the connection with the database.");
+    }
+    mongodb:Collection resultCollection = collection;
+
+    mongodb:Update update = {"unset": data };
 
     var insertResult = resultCollection->updateOne(filter, update);
     if insertResult is error {

@@ -52,14 +52,14 @@ public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Re
         return config:createresponse(false, document.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     if document is null {
-        return config:createresponse(false, "User cannor fined.", {}, http:STATUS_NOT_FOUND);
+        return config:createresponse(false, "User cannot fined.", {}, http:STATUS_NOT_FOUND);
     }
     string OTP = functions:generateOtpCode();
     var issent=functions:sendEmail(forgetPBody.email,"OTP form Halgouce",OTP);
     if issent is error{
         return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    var newvalue = db:insertOneIntoDocument("users",{"otp":OTP},{"email":forgetPBody.email});
+    var newvalue = db:updateOneIntoDocument("users",{"email":forgetPBody.email},{"OTP":OTP});
     if newvalue is error{
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
@@ -68,12 +68,19 @@ public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Re
 
 
 public function submitOTP(utils:submitOTP body) returns http:Response|error {
-    var document = db:getDocument("otp",{"email":body.email});
+    var document = db:getDocument("users",{"email":body.email});
     if document is error {
         return config:createresponse(false, document.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     if document is null {
-        return config:createresponse(false, "User cannor fined.", {}, http:STATUS_NOT_FOUND);
+        return config:createresponse(false, "User cannot fined.", {}, http:STATUS_NOT_FOUND);
+    }
+    if document.OTP !=body.OTP{
+        return config:createresponse(false, "Invalid OTP.", {}, http:STATUS_UNAUTHORIZED);
+    }
+    var newvalue = db:removeOneFromDocument("users",{"email":body.email},{"OTP":""});
+    if newvalue is error{
+        return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     return config:createresponse(true, "OTP sent successfully.", body.toJson(), http:STATUS_OK);
 }
