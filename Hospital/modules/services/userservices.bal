@@ -29,8 +29,11 @@ service /user on config:serverListener {
     resource function post forgetPassword(@http:Payload utils:ForgetPassword forgetPBody) returns http:Response|error {
         return routes:forgetPassword(forgetPBody);
     }
-    resource function post submitOTP(@http:Payload utils:submitOTP body) returns http:Response|error {
-        return routes:submitOTP(body);
+    resource function post submitOTP(http:Request req,@http:Payload utils:submitOTP body) returns http:Response|error {
+        return routes:submitOTP(req,body);
+    }
+    resource function post changePassword(http:Request req,@http:Payload utils:changePassword body) returns http:Response|error {
+        return routes:changePassword(req,body);
     }
 }
 public function startServices()  {

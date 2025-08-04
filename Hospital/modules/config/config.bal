@@ -25,6 +25,23 @@ public function createresponse(boolean success, string message, json data, int s
     return res;
 }
 
+
+public  function  getCookie(http:Request req,string cookieName) returns string|error {
+    http:Cookie[] cookies = req.getCookies();
+    http:Cookie[] newCookie = cookies.filter(function(http:Cookie cookie) returns boolean {
+        return cookie.name == cookieName;
+    });
+
+    if newCookie.length() > 0 {
+        string? reqCookie = newCookie[0].value;
+        if reqCookie is string {
+            return reqCookie;
+        }
+    }
+    return error("Cookie not found.");
+}
+
+
 public jwt:IssuerConfig jwtIssuerConfig = {
     username: "ballerina",
     issuer: "ballerina",

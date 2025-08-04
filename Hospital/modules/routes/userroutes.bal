@@ -15,7 +15,7 @@ public function register(utils:User user) returns http:Response|error {
         return config:createresponse(false, "User email already exists.", {}, http:STATUS_CONFLICT);
     }
 
-    user.pasword = functions:hashPassword(user.pasword);
+    user.password = functions:hashPassword(user.password);
     var newrec = db:insertOneIntoCollection("users", user);
     if newrec is error {
         return config:createresponse(false, newrec.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
@@ -33,7 +33,7 @@ public function login(utils:UserLogin user) returns http:Response|error {
         return config:createresponse(false, "Please register first.", {}, http:STATUS_NOT_FOUND);
     }
 
-    if document.pasword != functions:hashPassword(user.pasword) {
+    if document.password != functions:hashPassword(user.password) {
         return config:createresponse(false, "Invalid password.", {}, http:STATUS_UNAUTHORIZED);
     }
 
@@ -63,12 +63,17 @@ public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Re
     if newvalue is error{
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    return config:createresponse(true, "OTP sent successfully.", forgetPBody.toJson(), http:STATUS_OK);
+    http:Cookie cookie = new ("email", forgetPBody.email, path = "/");
+    return config:createresponse(true, "OTP sent successfully.", forgetPBody.toJson(), http:STATUS_OK,cookie);
 }
 
 
-public function submitOTP(utils:submitOTP body) returns http:Response|error {
-    var document = db:getDocument("users",{"email":body.email});
+public function submitOTP(http:Request req,utils:submitOTP body) returns http:Response|error {
+    var email = config:getCookie(req,"email");
+    if email is error {
+        return config:createresponse(false, email.message(), {}, http:STATUS_NOT_FOUND);
+    }
+    var document = db:getDocument("users",{"email":email});
     if document is error {
         return config:createresponse(false, document.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
@@ -78,9 +83,23 @@ public function submitOTP(utils:submitOTP body) returns http:Response|error {
     if document.OTP !=body.OTP{
         return config:createresponse(false, "Invalid OTP.", {}, http:STATUS_UNAUTHORIZED);
     }
-    var newvalue = db:removeOneFromDocument("users",{"email":body.email},{"OTP":""});
+    var newvalue = db:removeOneFromDocument("users",{"email":email},{"OTP":""});
     if newvalue is error{
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    return config:createresponse(true, "OTP sent successfully.", body.toJson(), http:STATUS_OK);
+    return config:createresponse(true, "OTP submit successfully.", body.toJson(), http:STATUS_OK);
+}
+
+
+public function changePassword(http:Request req,utils:changePassword body) returns http:Response|error {
+    var email = config:getCookie(req,"email");
+    if email is error {
+        return config:createresponse(false, email.message(), {}, http:STATUS_NOT_FOUND);
+    }
+    string pasword = functions:hashPassword(body.password);
+    var newvalue = db:updateOneIntoDocument("users",{"email":email},{"password":pasword});
+    if newvalue is error{
+        return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Password changed successfully.", body.toJson(), http:STATUS_OK);
 }

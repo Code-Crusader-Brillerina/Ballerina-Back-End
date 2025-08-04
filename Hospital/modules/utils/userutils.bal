@@ -6,7 +6,7 @@ public type User record {
         pattern: re`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$`
     }
     string email;
-    string pasword;
+    string password;
     string role;
     string phoneNumber;
     string city;
@@ -21,7 +21,7 @@ public type UserLogin record {
     }
     string email;
 
-    string pasword;
+    string password;
     
 };
 
@@ -34,9 +34,11 @@ public type ForgetPassword record {
 };
 
 public type submitOTP record {
-    @constraint:String {
-        pattern: re`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$`
-    }
-    string email;
     string OTP;
 };
+
+
+public type changePassword record {
+    string password;
+};
+
