@@ -29,6 +29,9 @@ service /user on config:serverListener {
     resource function post forgetPassword(@http:Payload utils:ForgetPassword forgetPBody) returns http:Response|error {
         return routes:forgetPassword(forgetPBody);
     }
+    resource function post submitOTP(@http:Payload utils:submitOTP body) returns http:Response|error {
+        return routes:submitOTP(body);
+    }
 }
 public function startServices()  {
     io:println("Start services.");

@@ -1,5 +1,6 @@
 import ballerina/http;
 
+
 import Hospital.db;
 import Hospital.utils;
 import Hospital.config;
@@ -36,7 +37,8 @@ public function login(utils:UserLogin user) returns http:Response|error {
         return config:createresponse(false, "Invalid password.", {}, http:STATUS_UNAUTHORIZED);
     }
 
-    var token=functions:crateJWT(document);
+    utils:User convirtedDoc = check document.cloneWithType();
+    var token=functions:crateJWT(convirtedDoc);
     if token is error {
         return config:createresponse(false, "Error creating JWT.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
@@ -62,4 +64,16 @@ public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Re
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     return config:createresponse(true, "OTP sent successfully.", forgetPBody.toJson(), http:STATUS_OK);
+}
+
+
+public function submitOTP(utils:submitOTP body) returns http:Response|error {
+    var document = db:getDocument("otp",{"email":body.email});
+    if document is error {
+        return config:createresponse(false, document.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if document is null {
+        return config:createresponse(false, "User cannor fined.", {}, http:STATUS_NOT_FOUND);
+    }
+    return config:createresponse(true, "OTP sent successfully.", body.toJson(), http:STATUS_OK);
 }

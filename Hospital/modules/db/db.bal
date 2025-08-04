@@ -1,16 +1,16 @@
 import Hospital.config;
 import ballerinax/mongodb;
-import Hospital.utils;
 
 public function getDBCollection(string collectionName) returns mongodb:Collection|error {
     mongodb:Database db = check config:mongoClient->getDatabase(config:DATABASE);
     return check db->getCollection(collectionName);
 }
 
-public function getDocumentFromCollection(mongodb:Collection collection,map<json> value) returns json|error{
-    utils:User? document = check collection->findOne(value, {});
-    return document;
+public function getDocumentFromCollection(mongodb:Collection collection, map<json> filter) returns json|error {
+    record {| anydata...; |}? result = check collection->findOne(filter, {});
+    return result.toJson();
 }
+
 
 public function getDocument(string collectionName,map<json> value)returns json|error{
     var collection = getDBCollection(collectionName);
