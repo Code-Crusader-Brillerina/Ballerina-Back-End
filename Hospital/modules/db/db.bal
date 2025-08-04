@@ -1,5 +1,4 @@
 import ballerinax/mongodb;
-import ballerina/io;
 
 import Hospital.config;
 
