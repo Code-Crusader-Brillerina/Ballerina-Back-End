@@ -39,7 +39,7 @@ public function insertOneIntoDocument(string collectionName,record {} data) retu
 
     // Handle insertion failure
     if insertResult is error {
-        return error("Failed to register user.");
+        return error("Failed inserting the document.");
     }
     return data;
 }

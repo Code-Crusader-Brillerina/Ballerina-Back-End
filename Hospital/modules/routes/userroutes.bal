@@ -52,9 +52,14 @@ public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Re
     if document is null {
         return config:createresponse(false, "User cannor fined.", {}, http:STATUS_NOT_FOUND);
     }
-    var issent=functions:sendEmail(forgetPBody.email);
+    string OTP = functions:generateOtpCode();
+    var issent=functions:sendEmail(forgetPBody.email,"OTP form Halgouce",OTP);
     if issent is error{
         return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    var newvalue = db:insertOneIntoDocument("otp", {"otp":OTP,"email":forgetPBody.email});
+    if newvalue is error{
+        return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     return config:createresponse(true, "OTP sent successfully.", forgetPBody.toJson(), http:STATUS_OK);
 }

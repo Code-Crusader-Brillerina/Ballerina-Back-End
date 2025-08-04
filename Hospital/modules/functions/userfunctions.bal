@@ -1,7 +1,7 @@
 import ballerina/crypto;
 import ballerina/jwt;
 import ballerina/email;
-
+import ballerina/random;
 
 import Hospital.config;
 import Hospital.utils;
@@ -31,17 +31,23 @@ public function crateJWT(utils:User user) returns string|error{
 }
 
 
-public function sendEmail(string reciver) returns error? {
+public function sendEmail(string reciver,string subject,string message) returns error? {
     email:SmtpClient smtpClient = check new ("smtp.gmail.com", "r.k.fashionkurunegala@gmail.com" , "ifou lnky aiot hoim");
     email:Message email = {
         to: reciver,
-        subject: "Sample Email",
-        body: "This is a sample email."
+        subject: subject,
+        body: message
     };
     var issent= smtpClient->sendMessage(email);
     if issent is error {
         return error("Error from sending the email.");
     } 
+}
+
+
+public function generateOtpCode() returns string {
+    int code = checkpanic random:createIntInRange(100000, 999999);
+    return code.toString();
 }
 
 
