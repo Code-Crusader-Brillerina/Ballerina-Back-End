@@ -55,6 +55,20 @@ modules = [
 
 [[package]]
 org = "ballerina"
+name = "email"
+version = "2.10.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "mime"},
+	{org = "ballerina", name = "task"}
+]
+modules = [
+	{org = "ballerina", packageName = "email", moduleName = "email"}
+]
+
+[[package]]
+org = "ballerina"
 name = "file"
 version = "1.10.0"
 dependencies = [
@@ -314,6 +328,7 @@ version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "crypto"},
+	{org = "ballerina", name = "email"},
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jwt"},

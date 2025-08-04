@@ -26,3 +26,11 @@ public type UserLogin record {
     string pasword;
     
 };
+
+public type ForgetPassword record {
+    @constraint:String {
+        pattern: re`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$`
+    }
+    string email;
+    
+};

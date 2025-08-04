@@ -43,3 +43,18 @@ public function login(utils:UserLogin user) returns http:Response|error {
     http:Cookie cookie = new ("JWT", token, path = "/");
     return config:createresponse(true, "User login successful.", user.toJson(), http:STATUS_OK,cookie);
 }
+
+public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Response|error {
+    var document = db:getUser(forgetPBody.email);
+    if document is error {
+        return config:createresponse(false, document.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if document is null {
+        return config:createresponse(false, "User cannor fined.", {}, http:STATUS_NOT_FOUND);
+    }
+    var issent=functions:sendEmail(forgetPBody.email);
+    if issent is error{
+        return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "OTP sent successfully.", forgetPBody.toJson(), http:STATUS_OK);
+}

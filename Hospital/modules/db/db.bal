@@ -8,8 +8,8 @@ public function getDBCollection(string collectionName) returns mongodb:Collectio
 }
 
 public function getDocumentFromCollection(mongodb:Collection collection,map<json> value) returns json|error{
-    utils:User? existingUser = check collection->findOne(value, {});
-    return existingUser;
+    utils:User? document = check collection->findOne(value, {});
+    return document;
 }
 
 public function getDocument(string collectionName,map<json> value)returns json|error{
