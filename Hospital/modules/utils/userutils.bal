@@ -1,6 +1,6 @@
 import ballerina/constraint;
 
-public type User record {|
+public type User record {
     string username;
 
     @constraint:String {
@@ -15,7 +15,7 @@ public type User record {|
     string district;
     string profilepic;
 
-|};
+};
 
 public type UserLogin record {
     @constraint:String {
