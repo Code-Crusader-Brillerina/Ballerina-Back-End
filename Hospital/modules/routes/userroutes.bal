@@ -16,7 +16,7 @@ public function register(utils:User user) returns http:Response|error {
     }
 
     user.pasword = functions:hashPassword(user.pasword);
-    var newrec = db:insertOneIntoDocument("users", user);
+    var newrec = db:insertOneIntoCollection("users", user);
     if newrec is error {
         return config:createresponse(false, newrec.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
@@ -59,7 +59,7 @@ public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Re
     if issent is error{
         return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    var newvalue = db:insertOneIntoDocument("otp", {"otp":OTP,"email":forgetPBody.email});
+    var newvalue = db:insertOneIntoCollection("otp", {"otp":OTP,"email":forgetPBody.email});
     if newvalue is error{
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }

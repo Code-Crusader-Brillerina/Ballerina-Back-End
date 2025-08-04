@@ -27,7 +27,7 @@ public function getDocument(string collectionName,map<json> value)returns json|e
 
 }
 
-public function insertOneIntoDocument(string collectionName,record {} data) returns record {}|error{
+public function insertOneIntoCollection(string collectionName,record {} data) returns record {}|error{
     var collection = getDBCollection(collectionName);
     if collection is error {
         return error("Failed to get the connection with the database.");
