@@ -9,9 +9,13 @@ public function getDBCollection(string collectionName) returns mongodb:Collectio
 }
 
 public function getDocumentFromCollection(mongodb:Collection collection, map<json> filter) returns json|error {
-    record {| anydata...; |}? result = check collection->findOne(filter, {});
+    record {| anydata...; |}? result = check collection->findOne(filter);
+    // io:println(result);
     return result.toJson();
 }
+
+
+
 
 
 public function getDocument(string collectionName,map<json> value)returns json|error{

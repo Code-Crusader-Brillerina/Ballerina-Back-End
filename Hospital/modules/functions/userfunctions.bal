@@ -23,7 +23,8 @@ public function crateJWT(utils:User user) returns string|error{
         customClaims: {
             "role": user.role,
             "username": user.username,
-            "email": user.email
+            "email": user.email,
+            "uid":user.uid
         }
     };
     string token = check jwt:issue(config);

@@ -1,5 +1,5 @@
 import ballerina/http;
-
+// import ballerina/io;
 
 import Hospital.db;
 import Hospital.utils;
@@ -36,7 +36,7 @@ public function login(utils:UserLogin user) returns http:Response|error {
     if document.password != functions:hashPassword(user.password) {
         return config:createresponse(false, "Invalid password.", {}, http:STATUS_UNAUTHORIZED);
     }
-
+    // io:println(document);
     utils:User convirtedDoc = check document.cloneWithType();
     var token=functions:crateJWT(convirtedDoc);
     if token is error {

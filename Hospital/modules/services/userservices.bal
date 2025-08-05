@@ -1,8 +1,9 @@
 import ballerina/io;
+import ballerina/http;
+
 import Hospital.config;
 import Hospital.routes;
 import Hospital.utils;
-import ballerina/http;
 
 
 @http:ServiceConfig {

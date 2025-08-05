@@ -1,6 +1,7 @@
 import ballerina/constraint;
 
 public type User record {
+    string uid;
     string username;
     @constraint:String {
         pattern: re`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$`
@@ -41,4 +42,3 @@ public type submitOTP record {
 public type changePassword record {
     string password;
 };
-
