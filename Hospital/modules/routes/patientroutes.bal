@@ -7,10 +7,32 @@ import Hospital.config;
 import Hospital.functions;
 
 public function updatePatient(http:Request req,utils:PatientUpdateBody body) returns http:Response|error {
+    // get email
+    // remove email
+    // remove email
+    // cheack email exist
+    // if exist add email again and remove the error
+    // if not exist add new data to users
+    // add data to patients
+    // update the token
+
     var uid = config:autheriseAs(req,"patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
+    // get email
+    var existuser=db:getUserById(uid.toString());
+    if existuser is error {
+        return config:createresponse(false, existuser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if existuser is null {
+        return config:createresponse(false, "User cannot fined.", {}, http:STATUS_NOT_FOUND);
+    }
+    var existMail=existuser.email;
+    if existMail is error {
+        return config:createresponse(false, existMail.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
     // remove email
     var removeemail = db:removeOneFromDocument("users",{"uid":uid},{"email":""});
     if removeemail is error{
@@ -23,7 +45,7 @@ public function updatePatient(http:Request req,utils:PatientUpdateBody body) ret
     }
     // if exist add email again and remove the error
     if exist is true {
-        var addemail = db:updateDocument("users",{"uid":uid},{"email":body.userData.email});
+        var addemail = db:updateDocument("users",{"uid":uid},{"email":existMail});
         if addemail is error{
             return config:createresponse(false, addemail.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
         }
@@ -42,7 +64,7 @@ public function updatePatient(http:Request req,utils:PatientUpdateBody body) ret
     if newuser is error{
         return config:createresponse(false, newuser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    // add data to patiend
+    // add data to patients
     var newpatient = db:updateDocument("patients",{"pid":uid},{
         "DOB":body.patientData.DOB,
         "gender":body.patientData.gender

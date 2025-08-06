@@ -14,10 +14,6 @@ public function getDocumentFromCollection(mongodb:Collection collection, map<jso
     return result.toJson();
 }
 
-
-
-
-
 public function getDocument(string collectionName,map<json> value)returns json|error{
     var collection = getDBCollection(collectionName);
     if collection is error {
@@ -64,8 +60,6 @@ public function updateDocument(string collectionName, map<json> filter, map<json
     }
     return data;
 }
-
-
 
 public function removeOneFromDocument(string collectionName, map<json> filter, map<json> data) returns record {}|error {
     var collection = getDBCollection(collectionName);

@@ -17,3 +17,11 @@ public function getUser(string email) returns json|null|error{
     }   
     return document;
 }
+
+public function getUserById(string uid) returns json|null|error{
+    var document = getDocument("users",{"uid":uid});
+    if document is error {
+        return error(document.message());
+    }   
+    return document;
+}
