@@ -16,6 +16,18 @@ public type User record {
 
 };
 
+public type UserUpdate record {
+    @constraint:String {
+        pattern: re`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$`
+    }
+    string email;
+    string username;
+    string phoneNumber;
+    string city;
+    string district;
+    string profilepic;
+};
+
 public type RegisterBody record {
     User userData;
     Patient patientData;
@@ -47,3 +59,5 @@ public type submitOTP record {
 public type changePassword record {
     string password;
 };
+
+

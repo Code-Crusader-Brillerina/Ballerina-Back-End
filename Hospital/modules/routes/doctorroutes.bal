@@ -59,45 +59,19 @@ public function updateDoctor(http:Request req,utils:DoctorUpdateBody body) retur
     }
 
     // if not exist add new data to users
-    var newuser = db:updateDocument("users",{"uid":uid},{
-        "email":body.userData.email,
-        "username":body.userData.username,
-        "phoneNumber":body.userData.phoneNumber,
-        "city":body.userData.city,
-        "district":body.userData.district,
-        "profilepic":body.userData.profilepic
-    });
-    if newuser is error{
-        return config:createresponse(false, newuser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    var newUser =db:updateUser(uid.toString(),body.userData);
+    if newUser is error{
+        return config:createresponse(false, newUser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
     // add data to doctors
-    var newdoctor = db:updateDocument("doctors",{"did":uid},{
-        "specialization":body.doctorData.specialization,
-        "licenseNomber":body.doctorData.licenseNomber,
-        "experience":body.doctorData.experience,
-        "consultationFee":body.doctorData.consultationFee,
-        "availableTimes":body.doctorData.availableTimes,
-        "description":body.doctorData.description
-    });
+    var newdoctor = db:updateDoctor(uid.toString(),body.doctorData);
     if newdoctor is error{
         return config:createresponse(false, newdoctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    
-    // update the token
-    utils:User user={
-        username: body.userData.username,
-        email: body.userData.email,
-        uid: uid.toString(),
-        password: "",
-        role:"patient",
-        phoneNumber:"",
-        city:"",
-        district:"",
-        profilepic:""
 
-    };
-    var token=functions:crateJWT(user);
+    // update the token
+    var token=functions:updateJWT(uid.toString(),"doctor",body.userData);
     if token is error {
         return config:createresponse(false, "Error creating JWT.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }

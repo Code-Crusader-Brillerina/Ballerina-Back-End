@@ -2,6 +2,7 @@ import ballerina/crypto;
 import ballerina/jwt;
 import ballerina/email;
 import ballerina/random;
+// import ballerina/io;
 
 import Hospital.config;
 import Hospital.utils;
@@ -28,6 +29,23 @@ public function crateJWT(utils:User user) returns string|error{
         }
     };
     string token = check jwt:issue(config);
+    return  token;
+}
+
+public function updateJWT(string uid,string role,utils:UserUpdate userData) returns string|error{
+    utils:User newuser={
+        username: userData.username,
+        email: userData.email,
+        uid: uid,
+        role:role,
+        password: "",
+        phoneNumber:"",
+        city:"",
+        district:"",
+        profilepic:""
+
+    };
+    var token=crateJWT(newuser);
     return  token;
 }
 
