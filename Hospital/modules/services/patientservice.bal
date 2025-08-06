@@ -11,4 +11,7 @@ service /patient on config:serverListener {
     resource function post updatePatient(http:Request req,@http:Payload utils:PatientUpdateBody body) returns http:Response|error {
         return routes:updatePatient(req,body);
     }
+    resource function get getAllDoctors(http:Request req) returns http:Response|error {
+        return routes:getAllDoctors(req);
+    }
 }

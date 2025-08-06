@@ -78,3 +78,22 @@ public function removeOneFromDocument(string collectionName, map<json> filter, m
 }
 
 
+public function getAllDocumentsFromCollection(string collectionName) returns json[]|error {
+    var collection = getDBCollection(collectionName);
+    if collection is error {
+        return error("Failed to get the connection with the database.");
+    }
+    stream<record {}, error?> result = checkpanic collection->find({});
+    json[] documents = [];
+
+    check from record {| anydata...; |} doc in result
+        do {
+            documents.push(doc.toJson());
+        };
+
+    return documents;
+}
+
+
+
+

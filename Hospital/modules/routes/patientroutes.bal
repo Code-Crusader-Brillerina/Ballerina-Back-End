@@ -73,3 +73,36 @@ public function updatePatient(http:Request req,utils:PatientUpdateBody body) ret
     http:Cookie cookie = new ("JWT", token, path = "/");
     return config:createresponse(true, "Patient update successful.", body.toJson(), http:STATUS_OK,cookie);
 }
+
+public function getAllDoctors(http:Request req) returns http:Response|error{
+    // get whole Doctor collection
+    var documents =  db:getAllDocumentsFromCollection("doctors");
+    if documents is error{
+        return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // get the username and profilepictures from user collection role equal doctore
+    json[] arr = [];
+    foreach json item in documents {
+        var did = check item.did;
+        var user= check db:getDocument("users",{"uid":did});
+        json obj = {
+            did: did,
+            specialization: check item.specialization,
+            licenseNomber: check item.licenseNomber,
+            experience: check item.experience,
+            consultationFee: check item.consultationFee,
+            availableTimes: check item.availableTimes,
+            description: check item.description,
+            username: check user.username,
+            profilepic: check user.profilepic
+        };
+
+        arr.push(obj.toJson());
+    }
+    // mach and return json object
+    return config:createresponse(true, "Doctors details found successfully.", arr, http:STATUS_OK);
+
+
+
+}
