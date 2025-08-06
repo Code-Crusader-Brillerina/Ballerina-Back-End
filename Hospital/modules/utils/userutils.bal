@@ -16,6 +16,11 @@ public type User record {
 
 };
 
+public type RegisterBody record {
+    User userData;
+    Patient patientData;
+};
+
 public type UserLogin record {
     @constraint:String {
         pattern: re`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$`

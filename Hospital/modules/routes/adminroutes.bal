@@ -27,7 +27,7 @@ public function addDoctor(http:Request req,utils:DoctorBody doctor) returns http
     if newrec is error {
         return config:createresponse(false, newrec.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    var newrecforDoctor = db:insertOneIntoCollection("doctor", doctor.doctorData);
+    var newrecforDoctor = db:insertOneIntoCollection("doctors", doctor.doctorData);
     if newrecforDoctor is error {
         return config:createresponse(false, newrecforDoctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }

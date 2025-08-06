@@ -6,8 +6,8 @@ import Hospital.utils;
 import Hospital.config;
 import Hospital.functions;
 
-public function register(utils:User user) returns http:Response|error {
-    var exist = db:isEmailExist(user.email);
+public function register(utils:RegisterBody body) returns http:Response|error {
+    var exist = db:isEmailExist(body.userData.email);
     if exist is error {
         return config:createresponse(false, exist.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
@@ -15,13 +15,17 @@ public function register(utils:User user) returns http:Response|error {
         return config:createresponse(false, "User email already exists.", {}, http:STATUS_CONFLICT);
     }
 
-    user.password = functions:hashPassword(user.password);
-    var newrec = db:insertOneIntoCollection("users", user);
-    if newrec is error {
-        return config:createresponse(false, newrec.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    body.userData.password = functions:hashPassword(body.userData.password);
+    var newUser = db:insertOneIntoCollection("users", body.userData);
+    if newUser is error {
+        return config:createresponse(false, newUser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    var newPatient = db:insertOneIntoCollection("patients", body.patientData);
+    if newPatient is error {
+        return config:createresponse(false, newPatient.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
-    return config:createresponse(true, "User registered successfully.", newrec.toJson(), http:STATUS_CREATED);
+    return config:createresponse(true, "User registered successfully.", body.toJson(), http:STATUS_CREATED);
 }
 
 public function login(utils:UserLogin user) returns http:Response|error {

@@ -41,12 +41,6 @@ public  function  getCookie(http:Request req,string cookieName) returns string|e
     return error("Cookie not found.");
 }
 
-// public function autherise(){
-//     // get the token from cookie
-//     // decode JWT
-//     // 
-// }
-
 
 public jwt:IssuerConfig jwtIssuerConfig = {
     username: "ballerina",
