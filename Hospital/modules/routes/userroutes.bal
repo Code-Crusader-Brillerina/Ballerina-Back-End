@@ -63,7 +63,7 @@ public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Re
     if issent is error{
         return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    var newvalue = db:updateOneIntoDocument("users",{"email":forgetPBody.email},{"OTP":OTP});
+    var newvalue = db:updateDocument("users",{"email":forgetPBody.email},{"OTP":OTP});
     if newvalue is error{
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
@@ -101,7 +101,7 @@ public function changePassword(http:Request req,utils:changePassword body) retur
         return config:createresponse(false, email.message(), {}, http:STATUS_NOT_FOUND);
     }
     string pasword = functions:hashPassword(body.password);
-    var newvalue = db:updateOneIntoDocument("users",{"email":email},{"password":pasword});
+    var newvalue = db:updateDocument("users",{"email":email},{"password":pasword});
     if newvalue is error{
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }

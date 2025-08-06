@@ -7,12 +7,9 @@ import Hospital.config;
 import Hospital.functions;
 
 public function addDoctor(http:Request req,utils:DoctorBody doctor) returns http:Response|error {
-    var auth = config:autherise(req);
-    if auth is error {
-        return config:createresponse(false, auth.message(), {}, http:STATUS_UNAUTHORIZED);
-    }
-    if auth.role != "admin" {
-        return config:createresponse(false, "You need admin privilagers to access to this properties.", {}, http:STATUS_UNAUTHORIZED);
+    var uid = config:autheriseAs(req,"admin");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
     var exist = db:isEmailExist(doctor.userData.email);
     if exist is error {

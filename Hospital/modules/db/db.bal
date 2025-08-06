@@ -50,7 +50,7 @@ public function insertOneIntoCollection(string collectionName,record {} data) re
     return data;
 }
 
-public function updateOneIntoDocument(string collectionName, map<json> filter, map<json> data) returns record {}|error {
+public function updateDocument(string collectionName, map<json> filter, map<json> data) returns record {}|error {
     var collection = getDBCollection(collectionName);
     if collection is error {
         return error("Failed to get the connection with the database.");
@@ -64,6 +64,8 @@ public function updateOneIntoDocument(string collectionName, map<json> filter, m
     }
     return data;
 }
+
+
 
 public function removeOneFromDocument(string collectionName, map<json> filter, map<json> data) returns record {}|error {
     var collection = getDBCollection(collectionName);

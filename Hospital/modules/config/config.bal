@@ -84,6 +84,17 @@ public function autherise(http:Request req) returns json|error {
     }
 }
 
+public function autheriseAs(http:Request req,string role) returns json|error {
+    var auth = autherise(req);
+    if auth is error {
+        return error(auth.message());
+    }
+    if auth.role != role {
+        return error( "This role cannot accese to this properties.");
+    }
+    return auth.uid;
+}
+
 
 public function startConfigs() {
     io:println("Start configs.");
