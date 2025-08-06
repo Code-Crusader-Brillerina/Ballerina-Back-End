@@ -9,7 +9,7 @@ service /admin on config:serverListener {
         return "Hellow admin from Ballerina...";
     }
 
-    resource function post addDoctor(@http:Payload utils:DoctorBody doctor) returns http:Response|error {
-        return routes:addDoctor(doctor);
+    resource function post addDoctor(http:Request req,@http:Payload utils:DoctorBody doctor) returns http:Response|error {
+        return routes:addDoctor(req,doctor);
     }
 }

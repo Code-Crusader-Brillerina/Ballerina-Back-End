@@ -1,12 +1,19 @@
 import ballerina/http;
-
+// import ballerina/io;
 
 import Hospital.db;
 import Hospital.utils;
 import Hospital.config;
 import Hospital.functions;
 
-public function addDoctor(utils:DoctorBody doctor) returns http:Response|error {
+public function addDoctor(http:Request req,utils:DoctorBody doctor) returns http:Response|error {
+    var auth = config:autherise(req);
+    if auth is error {
+        return config:createresponse(false, auth.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    if auth.role != "admin" {
+        return config:createresponse(false, "You need admin privilagers to access to this properties.", {}, http:STATUS_UNAUTHORIZED);
+    }
     var exist = db:isEmailExist(doctor.userData.email);
     if exist is error {
         return config:createresponse(false, exist.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);

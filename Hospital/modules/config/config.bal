@@ -41,6 +41,12 @@ public  function  getCookie(http:Request req,string cookieName) returns string|e
     return error("Cookie not found.");
 }
 
+// public function autherise(){
+//     // get the token from cookie
+//     // decode JWT
+//     // 
+// }
+
 
 public jwt:IssuerConfig jwtIssuerConfig = {
     username: "ballerina",
@@ -63,6 +69,26 @@ public jwt:ValidatorConfig jwtValidatorConfig = {
     },
     clockSkew: 60
 };
+
+
+public function autherise(http:Request req) returns json|error {
+    string|error token = getCookie(req,"JWT");
+    if (token is error) {
+        return token.message();
+    }
+
+    jwt:Payload|error payload = check jwt:validate(token, jwtValidatorConfig);
+    if (payload is jwt:Payload) {
+        return {
+            role:payload["role"].toString(),
+            username:payload["username"].toString(),
+            email:payload["email"].toString(),
+            uid:payload["uid"].toString()
+        };
+    } else {
+        return error("Unauthorized");
+    }
+}
 
 
 public function startConfigs() {
