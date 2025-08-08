@@ -61,3 +61,18 @@ public function getAllPharmacies(http:Request req) returns http:Response|error{
     // mach and return json object
     return config:createresponse(true, "Pharmacy details found successfully.", documents, http:STATUS_OK);
 }
+
+
+public function addMedicine(http:Request req,utils:Medicine medicine) returns http:Response|error {
+    var uid = config:autheriseAs(req,"admin");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    
+    var newmedicine = db:insertOneIntoCollection("medicienes", medicine);
+    if newmedicine is error {
+        return config:createresponse(false, newmedicine.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    return config:createresponse(true, "Medicine added successfully.", medicine.toJson(), http:STATUS_CREATED);
+}

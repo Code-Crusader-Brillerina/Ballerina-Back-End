@@ -17,4 +17,7 @@ service /admin on config:serverListener {
     resource function get getAllPharmacies(http:Request req) returns http:Response|error {
         return routes:getAllPharmacies(req);
     }
+    resource function post addMedicine(http:Request req,@http:Payload utils:Medicine medicine) returns http:Response|error {
+        return routes:addMedicine(req,medicine);
+    }
 }
