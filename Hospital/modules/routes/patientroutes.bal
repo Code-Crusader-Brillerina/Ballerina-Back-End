@@ -136,3 +136,17 @@ public function getQueue(utils:GetQueue body) returns http:Response|error{
     return config:createresponse(true, "Doctors details found successfully.", documents, http:STATUS_OK);
     
 }
+
+
+
+public function updateAppoinmentPayment(http:Request req,@http:Payload utils:UpdateAppoinmentPayment body) returns http:Response|error {
+    var uid = config:autheriseAs(req,"patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    var newvalue = db:updateDocument("appoinments",{"aid":body.aid},{"paymentState":"paid"});
+    if newvalue is error{
+        return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Appoinment Payment status updated succesfully.", body.toJson(), http:STATUS_OK);
+}

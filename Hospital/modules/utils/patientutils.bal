@@ -31,3 +31,7 @@ public type GetQueue record {
     string did;
     string date;
 };
+
+public type UpdateAppoinmentPayment record {
+    string aid;
+};
