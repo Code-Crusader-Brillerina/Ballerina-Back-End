@@ -27,4 +27,7 @@ public type Appoinment record {
 };
 
 
- 
+public type GetQueue record {
+    string did;
+    string date;
+};

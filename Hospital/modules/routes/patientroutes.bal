@@ -124,3 +124,15 @@ public function createAppointment(http:Request req,utils:Appoinment body) return
     }
     return config:createresponse(true, "Appinment created successfully.", body.toJson(), http:STATUS_OK);
 }
+
+public function getQueue(utils:GetQueue body) returns http:Response|error{
+    // get did
+    // get date
+    // find all the feilds in apoinment
+    var documents =  db:getDocumentList("appoinments",{did:body.did,date:body.date});
+    if documents is error{
+        return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Doctors details found successfully.", documents, http:STATUS_OK);
+    
+}

@@ -95,5 +95,22 @@ public function getAllDocumentsFromCollection(string collectionName) returns jso
 }
 
 
+public function getDocumentList(string collectionName,map<json> value) returns json[]|error {
+    var collection = getDBCollection(collectionName);
+    if collection is error {
+        return error("Failed to get the connection with the database.");
+    }
+    stream<record {}, error?> result = checkpanic collection->find(value);
+    json[] documents = [];
+
+    check from record {| anydata...; |} doc in result
+        do {
+            documents.push(doc.toJson());
+        };
+
+    return documents;
+}
+
+
 
 
