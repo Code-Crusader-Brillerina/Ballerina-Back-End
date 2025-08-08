@@ -31,3 +31,20 @@ public function addDoctor(http:Request req,utils:DoctorBody doctor) returns http
 
     return config:createresponse(true, "Doctor registered successfully.", doctor.toJson(), http:STATUS_CREATED);
 }
+
+
+public function addPharmacy(http:Request req,utils:Pharmacy pharmacy) returns http:Response|error {
+    var uid = config:autheriseAs(req,"admin");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    
+    var newpharmacy = db:insertOneIntoCollection("pharmacies", pharmacy);
+    if newpharmacy is error {
+        return config:createresponse(false, newpharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    return config:createresponse(true, "Pharmacy added successfully.", pharmacy.toJson(), http:STATUS_CREATED);
+}
+
+
