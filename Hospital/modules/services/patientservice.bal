@@ -32,5 +32,8 @@ service /patient on config:serverListener {
     resource function get getPatient(http:Request req) returns http:Response|error {
         return routes:getPatient(req);
     }
+    resource function post getDoctor(http:Request req,@http:Payload utils:GetDoctor body) returns http:Response|error {
+        return routes:getDoctorforPatient(req,body);
+    }
 
 }

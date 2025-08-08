@@ -39,3 +39,7 @@ public type UpdateAppoinmentPayment record {
 public type GetPrescription record {
     string preId;
 };
+
+public type GetDoctor record {
+    string did;
+};

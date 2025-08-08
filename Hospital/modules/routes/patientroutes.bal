@@ -312,3 +312,36 @@ public function getPatient(http:Request req) returns error|http:Response{
     return config:createresponse(true, "Patient foud succesfully.", result, http:STATUS_OK);
 
 }
+
+
+public function getDoctorforPatient(http:Request req,utils:GetDoctor body)returns error|http:Response{
+    var uid = config:autheriseAs(req,"patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    var user=  db:getDocument("users",{"uid":body.did});
+    if user is error{
+        return config:createresponse(false, user.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    var doctor=  db:getDocument("doctors",{"did":body.did});
+    if doctor is error{
+        return config:createresponse(false, doctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    json result={
+        did:check user.uid ,
+        username:check user.username ,
+        email:check user.email ,
+        profilepic:check user.profilepic ,
+
+        specialization:check doctor.specialization ,
+        licenseNomber:check doctor.licenseNomber ,
+        experience:check doctor.experience ,
+        consultationFee:check doctor.consultationFee ,
+        availableTimes:check doctor.availableTimes ,
+        description:check doctor.description 
+    };
+    return config:createresponse(true, "Prescription foound succesfully.", result, http:STATUS_OK);
+
+}
