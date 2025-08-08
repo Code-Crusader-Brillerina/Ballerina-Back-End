@@ -108,3 +108,18 @@ public function updateAppoinmentStatus(http:Request req,utils:UpdateAppoinmentSt
     }
     return config:createresponse(true, "Appoinment status updated succesfully.", body.toJson(), http:STATUS_OK);
 }
+
+
+public function createPrescription(http:Request req,utils:Prescription body) returns http:Response|error {
+
+    var uid = config:autheriseAs(req,"doctor");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    var newPrescription = db:insertOneIntoCollection("prescriptions", body);
+    if newPrescription is error {
+        return config:createresponse(false, newPrescription.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Prescription created succesfully.", body.toJson(), http:STATUS_OK);
+}

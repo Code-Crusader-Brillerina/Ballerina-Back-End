@@ -26,3 +26,29 @@ public type UpdateAppoinmentStatus record {
     string aid;
     string status;
 };
+
+public type PrescriptionItem record {
+    string preItemId;
+    string mediId;
+    string dosage;
+    string frequency;
+    string duration;
+    string quantity;
+    string instructions;
+};
+
+public type Prescription record {
+    string preId;
+    string pid;
+    string did;
+    string aid;
+    string dateTime;
+    string diliveryMethod;
+    string phId;
+    string status;
+    string note;
+    PrescriptionItem[] items;
+};
+
+
+ 
