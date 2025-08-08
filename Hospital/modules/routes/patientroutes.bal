@@ -289,3 +289,26 @@ public function getAllAppoinments(http:Request req) returns error|http:Response{
     return config:createresponse(true, "Prescription foound succesfully.", arr, http:STATUS_OK);
 
 }
+
+public function getPatient(http:Request req) returns error|http:Response{
+    var uid = config:autheriseAs(req,"patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    var user=  db:getDocument("users",{"uid":uid});
+    if user is error{
+        return config:createresponse(false, user.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    var partient=  db:getDocument("patients",{"pid":uid});
+    if partient is error{
+        return config:createresponse(false, partient.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    json result={
+        user:user,
+        partient:partient
+    };
+    return config:createresponse(true, "Prescription foound succesfully.", result, http:STATUS_OK);
+
+}

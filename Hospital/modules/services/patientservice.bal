@@ -29,4 +29,8 @@ service /patient on config:serverListener {
     resource function get getAllAppoinments(http:Request req) returns http:Response|error {
         return routes:getAllAppoinments(req);
     }
+    resource function get getPatient(http:Request req) returns http:Response|error {
+        return routes:getPatient(req);
+    }
+
 }
