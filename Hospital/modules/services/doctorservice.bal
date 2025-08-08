@@ -20,4 +20,7 @@ service /doctor on config:serverListener {
     resource function post createPrescription(http:Request req,@http:Payload utils:Prescription body) returns http:Response|error {
         return routes:createPrescription(req,body);
     }
+    resource function get getAllMedicines(http:Request req) returns http:Response|error {
+        return routes:getAllMedicinesDoctor(req);
+    }
 }
