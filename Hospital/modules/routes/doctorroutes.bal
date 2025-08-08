@@ -78,3 +78,19 @@ public function updateDoctor(http:Request req,utils:DoctorUpdateBody body) retur
     http:Cookie cookie = new ("JWT", token, path = "/");
     return config:createresponse(true, "Patient update successful.", body.toJson(), http:STATUS_OK,cookie);
 }
+
+
+
+public function getDoctorHistory(http:Request req) returns http:Response|error {
+
+    var uid = config:autheriseAs(req,"doctor");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    var documents =  db:getDocumentList("appoinments",{did:uid});
+    if documents is error{
+        return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Doctors details found successfully.", documents, http:STATUS_OK);
+}

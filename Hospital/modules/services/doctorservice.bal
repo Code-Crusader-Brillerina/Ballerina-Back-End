@@ -11,4 +11,7 @@ service /doctor on config:serverListener {
     resource function post updateDoctor(http:Request req,@http:Payload utils:DoctorUpdateBody body) returns http:Response|error {
         return routes:updateDoctor(req,body);
     }
+    resource function get getDoctorHistory(http:Request req) returns http:Response|error {
+        return routes:getDoctorHistory(req);
+    }
 }
