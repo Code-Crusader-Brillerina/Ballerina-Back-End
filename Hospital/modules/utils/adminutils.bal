@@ -18,7 +18,7 @@ public type Pharmacy record {
 };
 
 public type Medicine record {
-    string medId;
+    string mediId;
     string name;
     string strength;
     string form;

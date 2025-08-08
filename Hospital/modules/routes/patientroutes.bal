@@ -150,3 +150,91 @@ public function updateAppoinmentPayment(http:Request req,@http:Payload utils:Upd
     }
     return config:createresponse(true, "Appoinment Payment status updated succesfully.", body.toJson(), http:STATUS_OK);
 }
+
+
+public function getPrescription(http:Request req,utils:GetPrescription body) returns error|http:Response{
+    // get pid from token
+    // get prescription fron db
+    // get appoinment from db
+    // get pharmacy from db
+    // loop throug items
+        // get medicine from database
+        // create finel data
+    
+    // get pid from token
+    var uid = config:autheriseAs(req,"patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    // get prescription fron db
+    var prescription=  db:getDocument("prescriptions",{"preId":body.preId});
+    if prescription is error{
+        return config:createresponse(false, prescription.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    // get appoinment from db
+    var appoinment=  db:getDocument("appoinments",{"aid":check prescription.aid});
+    if appoinment is error{
+        return config:createresponse(false, appoinment.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // get pharmacy from db
+    var pharmacy=  db:getDocument("pharmacies",{"phId":check prescription.phId});
+    if pharmacy is error{
+        return config:createresponse(false, pharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // get the doctor
+    var doctor=  db:getDocument("users",{"uid":check prescription.did});
+    if doctor is error{
+        return config:createresponse(false, doctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+  
+
+    // loop throug items
+    json[] arr = [];
+    json[] items = <json[]> check  prescription.items;
+    foreach json item in items {
+        var mediId = check item.mediId;
+        var medicine= check db:getDocument("medicines",{"mediId":mediId});
+        json obj = {
+            mediId: mediId,
+            name:check medicine.name,
+            strength:check medicine.strength,
+            form:check medicine.form,
+
+            preItemId:check item.preItemId,
+            dosage:check item.dosage,
+            frequency:check item.frequency,
+            duration:check item.duration,
+            quantity:check item.quantity,
+            instructions:check item.instructions
+        };
+
+        arr.push(obj.toJson());
+    }
+
+    json result = {
+        preId:body.preId,
+        pid:check prescription.pid,
+
+        doctor:{
+            name:check doctor.username,
+            profilepic:check doctor.profilepic
+        },
+
+        appoinment:appoinment,
+
+        dateTime:check prescription.dateTime,
+        diliveryMethod:check prescription.diliveryMethod,
+
+        pharmacy:pharmacy,
+
+        status:check prescription.status,
+        note:check prescription.note,
+
+        items:arr
+    };
+
+    return config:createresponse(true, "Prescription foound succesfully.", result, http:STATUS_OK);
+
+}

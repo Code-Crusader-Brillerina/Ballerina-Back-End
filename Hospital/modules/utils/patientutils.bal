@@ -35,3 +35,7 @@ public type GetQueue record {
 public type UpdateAppoinmentPayment record {
     string aid;
 };
+
+public type GetPrescription record {
+    string preId;
+};

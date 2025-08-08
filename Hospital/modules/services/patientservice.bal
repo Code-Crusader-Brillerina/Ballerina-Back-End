@@ -23,4 +23,7 @@ service /patient on config:serverListener {
     resource function post updateAppoinmentPayment(http:Request req,@http:Payload utils:UpdateAppoinmentPayment body) returns http:Response|error {
         return routes:updateAppoinmentPayment(req,body);
     }
+    resource function post getPrescription(http:Request req,@http:Payload utils:GetPrescription body) returns http:Response|error {
+        return routes:getPrescription(req,body);
+    }
 }
