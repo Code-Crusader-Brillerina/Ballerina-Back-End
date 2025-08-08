@@ -23,4 +23,7 @@ service /doctor on config:serverListener {
     resource function get getAllMedicines(http:Request req) returns http:Response|error {
         return routes:getAllMedicinesDoctor(req);
     }
+    resource function get getDoctor(http:Request req) returns http:Response|error {
+        return routes:getDoctor(req);
+    }
 }

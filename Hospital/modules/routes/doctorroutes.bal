@@ -137,3 +137,26 @@ public function getAllMedicinesDoctor(http:Request req) returns http:Response|er
     // mach and return json object
     return config:createresponse(true, "Medicine details found successfully.", documents, http:STATUS_OK);
 }
+
+public function getDoctor(http:Request req) returns error|http:Response{
+    var uid = config:autheriseAs(req,"doctor");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    var user=  db:getDocument("users",{"uid":uid});
+    if user is error{
+        return config:createresponse(false, user.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    var doctor=  db:getDocument("doctors",{"did":uid});
+    if doctor is error{
+        return config:createresponse(false, doctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    json result={
+        user:user,
+        doctor:doctor
+    };
+    return config:createresponse(true, "Prescription foound succesfully.", result, http:STATUS_OK);
+
+}

@@ -235,7 +235,7 @@ public function getPrescription(http:Request req,utils:GetPrescription body) ret
         items:arr
     };
 
-    return config:createresponse(true, "Prescription foound succesfully.", result, http:STATUS_OK);
+    return config:createresponse(true, "Prescription found succesfully.", result, http:STATUS_OK);
 
 }
 
@@ -286,7 +286,7 @@ public function getAllAppoinments(http:Request req) returns error|http:Response{
 
         arr.push(obj.toJson());
     }
-    return config:createresponse(true, "Prescription foound succesfully.", arr, http:STATUS_OK);
+    return config:createresponse(true, "Apoinments found succesfully.", arr, http:STATUS_OK);
 
 }
 
@@ -309,6 +309,6 @@ public function getPatient(http:Request req) returns error|http:Response{
         user:user,
         partient:partient
     };
-    return config:createresponse(true, "Prescription foound succesfully.", result, http:STATUS_OK);
+    return config:createresponse(true, "Patient foud succesfully.", result, http:STATUS_OK);
 
 }
