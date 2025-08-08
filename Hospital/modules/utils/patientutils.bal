@@ -12,3 +12,19 @@ public type PatientUpdateBody record {
     UserUpdate userData;
     PatientUpdate patientData;
 };
+
+public type Appoinment record {
+    string aid;
+    string pid;
+    string did;
+    string date;
+    string time;
+    // time = morning or evening
+    string status;
+    string description;
+    string[] reports;
+    string paymentState;
+};
+
+
+ 

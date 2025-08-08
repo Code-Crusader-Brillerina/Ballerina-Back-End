@@ -14,4 +14,7 @@ service /patient on config:serverListener {
     resource function get getAllDoctors(http:Request req) returns http:Response|error {
         return routes:getAllDoctors(req);
     }
+    resource function post createAppointment(http:Request req,@http:Payload utils:Appoinment body) returns http:Response|error {
+        return routes:createAppointment(req,body);
+    }
 }

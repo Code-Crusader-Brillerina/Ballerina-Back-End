@@ -102,7 +102,25 @@ public function getAllDoctors(http:Request req) returns http:Response|error{
     }
     // mach and return json object
     return config:createresponse(true, "Doctors details found successfully.", arr, http:STATUS_OK);
+}
 
+public function createAppointment(http:Request req,utils:Appoinment body) returns http:Response|error {
+    // autherise as pationt and get the uid
+    // add uid to the apoinment body to pid
+    // save theapoinment on db
 
+    // autherise as pationt and get the uid
+    var uid = config:autheriseAs(req,"patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
 
+    // add uid to the apoinment body to pid
+    body.pid=uid.toString();
+
+    var newAppoinment = db:insertOneIntoCollection("appoinments", body);
+    if newAppoinment is error {
+        return config:createresponse(false, newAppoinment.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Appinment created successfully.", body.toJson(), http:STATUS_OK);
 }
