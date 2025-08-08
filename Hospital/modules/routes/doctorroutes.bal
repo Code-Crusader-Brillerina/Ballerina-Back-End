@@ -92,5 +92,19 @@ public function getDoctorHistory(http:Request req) returns http:Response|error {
     if documents is error{
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    return config:createresponse(true, "Doctors details found successfully.", documents, http:STATUS_OK);
+    return config:createresponse(true, "Doctors history found successfully.", documents, http:STATUS_OK);
+}
+
+public function updateAppoinmentStatus(http:Request req,utils:UpdateAppoinmentStatus body) returns http:Response|error {
+
+    var uid = config:autheriseAs(req,"doctor");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    var newvalue = db:updateDocument("appoinments",{"aid":body.aid},{"status":body.status});
+    if newvalue is error{
+        return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Appoinment status updated succesfully.", body.toJson(), http:STATUS_OK);
 }

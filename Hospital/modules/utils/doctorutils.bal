@@ -22,3 +22,7 @@ public type DoctorUpdateBody record {
     DoctorUpdate doctorData;
 };
 
+public type UpdateAppoinmentStatus record {
+    string aid;
+    string status;
+};
