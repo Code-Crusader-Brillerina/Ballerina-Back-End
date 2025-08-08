@@ -69,10 +69,24 @@ public function addMedicine(http:Request req,utils:Medicine medicine) returns ht
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
     
-    var newmedicine = db:insertOneIntoCollection("medicienes", medicine);
+    var newmedicine = db:insertOneIntoCollection("medicines", medicine);
     if newmedicine is error {
         return config:createresponse(false, newmedicine.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
     return config:createresponse(true, "Medicine added successfully.", medicine.toJson(), http:STATUS_CREATED);
+}
+
+public function getAllMedicines(http:Request req) returns http:Response|error{
+    var uid = config:autheriseAs(req,"admin");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    // get whole Doctor collection
+    var documents =  db:getAllDocumentsFromCollection("medicines");
+    if documents is error{
+        return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    // mach and return json object
+    return config:createresponse(true, "Medicine details found successfully.", documents, http:STATUS_OK);
 }
