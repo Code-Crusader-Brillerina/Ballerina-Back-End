@@ -238,3 +238,54 @@ public function getPrescription(http:Request req,utils:GetPrescription body) ret
     return config:createresponse(true, "Prescription foound succesfully.", result, http:STATUS_OK);
 
 }
+
+public function getAllAppoinments(http:Request req) returns error|http:Response{
+    // get pid from token
+    // get allapoinments relate to the uid
+    // get doctors related to the apoinment 
+    // send the result
+
+    // get pid from token
+    var uid = config:autheriseAs(req,"patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    // get allapoinments relate to the uid
+    var documents =  db:getDocumentList("appoinments",{pid:uid});
+    if documents is error{
+        return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    json[] arr = [];
+    foreach json item in documents {
+        var did = check item.did;
+        var user= check db:getDocument("users",{"uid":did});
+        var doctor= check db:getDocument("doctors",{"did":did});
+        json obj = {
+            aid:check item.aid,
+            pid:uid,
+            doctor:{
+                did: did,
+                name: check user.username,
+                profilepic: check user.profilepic,
+                specialization: check doctor.specialization,
+                licenseNomber: check doctor.licenseNomber,
+                experience: check doctor.experience,
+                consultationFee: check doctor.consultationFee,
+                availableTimes: check doctor.availableTimes,
+                description: check doctor.description
+            },
+            date:check item.date,
+            time:check item.time,
+            status:check item.status,
+            description:check item.description,
+            reports:check item.reports,
+            paymentState:check item.paymentState
+            
+        };
+
+        arr.push(obj.toJson());
+    }
+    return config:createresponse(true, "Prescription foound succesfully.", arr, http:STATUS_OK);
+
+}

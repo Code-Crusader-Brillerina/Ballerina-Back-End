@@ -26,4 +26,7 @@ service /patient on config:serverListener {
     resource function post getPrescription(http:Request req,@http:Payload utils:GetPrescription body) returns http:Response|error {
         return routes:getPrescription(req,body);
     }
+    resource function get getAllAppoinments(http:Request req) returns http:Response|error {
+        return routes:getAllAppoinments(req);
+    }
 }
