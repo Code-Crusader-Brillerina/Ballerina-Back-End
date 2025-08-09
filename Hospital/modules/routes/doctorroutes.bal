@@ -116,7 +116,7 @@ public function createPrescription(http:Request req,utils:Prescription body) ret
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
-
+    body.did=uid.toString();
     var newPrescription = db:insertOneIntoCollection("prescriptions", body);
     if newPrescription is error {
         return config:createresponse(false, newPrescription.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
