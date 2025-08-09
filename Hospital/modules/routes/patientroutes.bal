@@ -357,7 +357,7 @@ public function getDoctorforPatient(http:Request req,utils:GetDoctor body)return
         availableTimes:check doctor.availableTimes ,
         description:check doctor.description 
     };
-    return config:createresponse(true, "Prescription found succesfully.", result, http:STATUS_OK);
+    return config:createresponse(true, "Doctor found succesfully.", result, http:STATUS_OK);
 
 }
 
@@ -372,7 +372,7 @@ public function getAllPharmacis(http:Request req)returns error|http:Response{
     if documents is error{
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    return config:createresponse(true, "Pharmacies foound succesfully.", documents, http:STATUS_OK);
+    return config:createresponse(true, "Pharmacies found succesfully.", documents, http:STATUS_OK);
 
 }
 
