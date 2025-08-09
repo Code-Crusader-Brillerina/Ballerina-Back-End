@@ -342,6 +342,21 @@ public function getDoctorforPatient(http:Request req,utils:GetDoctor body)return
         availableTimes:check doctor.availableTimes ,
         description:check doctor.description 
     };
-    return config:createresponse(true, "Prescription foound succesfully.", result, http:STATUS_OK);
+    return config:createresponse(true, "Prescription found succesfully.", result, http:STATUS_OK);
+
+}
+
+
+public function getAllPharmacis(http:Request req)returns error|http:Response{
+    var uid = config:autheriseAs(req,"patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    var documents =  db:getAllDocumentsFromCollection("pharmacies");
+    if documents is error{
+        return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Pharmacies foound succesfully.", documents, http:STATUS_OK);
 
 }
