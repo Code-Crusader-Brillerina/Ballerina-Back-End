@@ -38,5 +38,8 @@ service /patient on config:serverListener {
     resource function get getAllPharmacis(http:Request req) returns http:Response|error {
         return routes:getAllPharmacis(req);
     }
+    resource function post updatePrescriptionPharmacy(http:Request req,@http:Payload utils:UpdatePrescriptionPharmacy body) returns http:Response|error {
+        return routes:updatePrescriptionPharmacy(req,body);
+    }
 
 }

@@ -360,3 +360,16 @@ public function getAllPharmacis(http:Request req)returns error|http:Response{
     return config:createresponse(true, "Pharmacies foound succesfully.", documents, http:STATUS_OK);
 
 }
+
+public function updatePrescriptionPharmacy(http:Request req,utils:UpdatePrescriptionPharmacy body)returns error|http:Response{
+    var uid = config:autheriseAs(req,"patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    var newvalue = db:updateDocument("prescriptions",{"preId":body.preId},{"phId":body.phId});
+    if newvalue is error{
+        return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Prescription pharmacy updated succesfully.", body.toJson(), http:STATUS_OK);
+}

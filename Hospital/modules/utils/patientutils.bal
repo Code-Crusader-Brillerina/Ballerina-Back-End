@@ -43,3 +43,8 @@ public type GetPrescription record {
 public type GetDoctor record {
     string did;
 };
+
+public type UpdatePrescriptionPharmacy record {
+    string preId;
+    string phId;
+};
