@@ -171,6 +171,20 @@ public function getPrescription(http:Request req,utils:GetPrescription body) ret
     if prescription is error{
         return config:createresponse(false, prescription.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
+
+    // get prescription fron db
+    var user=  db:getDocument("users",{"uid":check prescription.pid});
+    if user is error{
+        return config:createresponse(false, user.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    json userData={
+        name:check user.username ,
+        phoneNumber:check user.phoneNumber ,
+        email:check user.email ,
+        city:check user.city ,
+        district:check user.district 
+    };
+    
     // get appoinment from db
     var appoinment=  db:getDocument("appoinments",{"aid":check prescription.aid});
     if appoinment is error{
@@ -215,7 +229,8 @@ public function getPrescription(http:Request req,utils:GetPrescription body) ret
 
     json result = {
         preId:body.preId,
-        pid:check prescription.pid,
+
+        patient:userData,
 
         doctor:{
             name:check doctor.username,
