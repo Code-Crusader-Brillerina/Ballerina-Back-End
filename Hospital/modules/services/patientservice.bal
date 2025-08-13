@@ -6,7 +6,7 @@ import Hospital.routes;
 
 @http:ServiceConfig {
     cors: {
-        allowOrigins: ["*"],
+        allowOrigins: [], // leave empty
         allowCredentials: true,
         allowHeaders: ["Content-Type", "Authorization"],
         exposeHeaders: ["X-CUSTOM-HEADER"],
@@ -14,6 +14,7 @@ import Hospital.routes;
         maxAge: 3600
     }
 }
+
 
 service /patient on config:serverListener {
     resource function get init() returns json|error {

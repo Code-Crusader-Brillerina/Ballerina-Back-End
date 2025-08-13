@@ -6,7 +6,7 @@ import Hospital.utils;
 
 @http:ServiceConfig {
     cors: {
-        allowOrigins: ["*"],
+        allowOrigins: ["http://192.168.8.102"],
         allowCredentials: true,
         allowHeaders: ["Content-Type", "Authorization"],
         exposeHeaders: ["X-CUSTOM-HEADER"],
@@ -36,5 +36,9 @@ service /doctor on config:serverListener {
     }
     resource function get getDoctor(http:Request req) returns http:Response|error {
         return routes:getDoctor(req);
+    }
+
+    resource function post getQueue(http:Request req,@http:Payload utils:DoctorGetQueue body) returns http:Response|error {
+        return routes:doctorGetQueue(req,body);
     }
 }

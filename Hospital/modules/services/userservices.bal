@@ -8,7 +8,7 @@ import Hospital.utils;
 
 @http:ServiceConfig {
     cors: {
-        allowOrigins: ["*"],
+        allowOrigins: [], // leave empty
         allowCredentials: true,
         allowHeaders: ["Content-Type", "Authorization"],
         exposeHeaders: ["X-CUSTOM-HEADER"],
@@ -16,6 +16,7 @@ import Hospital.utils;
         maxAge: 3600
     }
 }
+
 
 service /user on config:serverListener {
     resource function get init() returns json|error {

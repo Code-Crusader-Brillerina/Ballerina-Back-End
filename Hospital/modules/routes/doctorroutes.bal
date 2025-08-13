@@ -160,3 +160,19 @@ public function getDoctor(http:Request req) returns error|http:Response{
     return config:createresponse(true, "Prescription foound succesfully.", result, http:STATUS_OK);
 
 }
+
+public function doctorGetQueue(http:Request req,utils:DoctorGetQueue body) returns http:Response|error{
+    var uid = config:autheriseAs(req,"doctor");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    // get did
+    // get date
+    // find all the feilds in apoinment
+    var documents =  db:getDocumentList("appoinments",{did:uid,date:body.date});
+    if documents is error{
+        return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Details found successfully.", documents, http:STATUS_OK);
+    
+}

@@ -51,4 +51,9 @@ public type Prescription record {
 };
 
 
+public type DoctorGetQueue record {
+    string date;
+};
+
+
  
