@@ -46,7 +46,7 @@ public function login(utils:UserLogin user) returns http:Response|error {
     if token is error {
         return config:createresponse(false, "Error creating JWT.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    http:Cookie cookie = new ("JWT", token, path = "/");
+    http:Cookie cookie = new ("JWT", token, path = "/",secure=true);
     return config:createresponse(true, "User login successful.", user.toJson(), http:STATUS_OK,cookie);
 }
 
@@ -67,7 +67,7 @@ public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Re
     if newvalue is error{
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    http:Cookie cookie = new ("email", forgetPBody.email, path = "/");
+    http:Cookie cookie = new ("email", forgetPBody.email, path = "/",secure=true);
     return config:createresponse(true, "OTP sent successfully.", forgetPBody.toJson(), http:STATUS_OK,cookie);
 }
 

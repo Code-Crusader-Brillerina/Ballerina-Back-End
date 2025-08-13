@@ -70,7 +70,7 @@ public function updatePatient(http:Request req,utils:PatientUpdateBody body) ret
         return config:createresponse(false, "Error creating JWT.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
-    http:Cookie cookie = new ("JWT", token, path = "/");
+    http:Cookie cookie = new ("JWT", token, path = "/",secure=true);
     return config:createresponse(true, "Patient update successful.", body.toJson(), http:STATUS_OK,cookie);
 }
 
