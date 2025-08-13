@@ -4,7 +4,7 @@ import ballerinax/mongodb;
 import ballerina/jwt;
 
 
-public listener http:Listener serverListener = new (8080);
+public listener http:Listener serverListener = new (8080, host = "0.0.0.0");
 public mongodb:Client mongoClient = checkpanic new (connection = "mongodb+srv://eshansenadhi5:iqsPgDJ23DIROKQr@ballerina.uxzidam.mongodb.net/?retryWrites=true&w=majority&appName=Ballerina");
 public string DATABASE="Hospital";
 public string salt="We can won this price.";

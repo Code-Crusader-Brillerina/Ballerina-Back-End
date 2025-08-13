@@ -4,6 +4,18 @@ import Hospital.config;
 import Hospital.utils;
 import Hospital.routes;
 
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["*"],
+        allowCredentials: true,
+        allowHeaders: ["Content-Type", "Authorization"],
+        exposeHeaders: ["X-CUSTOM-HEADER"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        maxAge: 3600
+    }
+}
+
 service /admin on config:serverListener {
     resource function get init() returns json|error {
         return "Hellow admin from Ballerina...";
