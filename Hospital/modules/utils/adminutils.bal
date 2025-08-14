@@ -6,15 +6,20 @@ public type DoctorBody record {
 
 };
 
-public type Pharmacy record {
-    string phId;
+public type PharmacyData record {
+    string phId; 
     string name;
     string contactNomber;
     @constraint:String {
         pattern: re`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$`
     }
     string email;
+};
 
+
+public type PharmacyBody record {
+    User userData;
+    PharmacyData pharmacyData;
 };
 
 public type Medicine record {

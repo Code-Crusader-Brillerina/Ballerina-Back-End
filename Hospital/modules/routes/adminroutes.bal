@@ -1,4 +1,5 @@
 import ballerina/http;
+import ballerina/uuid;
 // import ballerina/io;
 // import ballerina/io;
 
@@ -34,18 +35,51 @@ public function addDoctor(http:Request req,utils:DoctorBody doctor) returns http
 }
 
 
-public function addPharmacy(http:Request req,utils:Pharmacy pharmacy) returns http:Response|error {
-    var uid = config:autheriseAs(req,"admin");
+public function addPharmacy(http:Request req, utils:PharmacyBody pharmacy) returns http:Response|error {
+    // Authorize as admin
+    var uid = config:autheriseAs(req, "admin");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
     
-    var newpharmacy = db:insertOneIntoCollection("pharmacies", pharmacy);
-    if newpharmacy is error {
-        return config:createresponse(false, newpharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    // Check if the user email already exists
+    var exist = db:isEmailExist(pharmacy.userData.email);
+    if exist is error {
+        return config:createresponse(false, exist.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if exist is true {
+        return config:createresponse(false, "User email already exists.", {}, http:STATUS_CONFLICT);
     }
 
-    return config:createresponse(true, "Pharmacy added successfully.", pharmacy.toJson(), http:STATUS_CREATED);
+    // --- Start of Changes ---
+
+    // 1. Generate a new unique ID
+    string newSharedId = uuid:createType1AsString();
+
+    // 2. Assign the SAME ID to both records using their respective field names
+    pharmacy.pharmacyData.phId = newSharedId; // Use phId for PharmacyData
+    pharmacy.userData.uid = newSharedId;      // Use uid for UserData
+
+    // --- End of Changes ---
+
+    // Hash the password and set the role
+    pharmacy.userData.password = functions:hashPassword(pharmacy.userData.password);
+    pharmacy.userData.role = "pharmacy";
+
+    // Insert user data into the 'users' collection
+    var newUser = db:insertOneIntoCollection("users", pharmacy.userData);
+    if newUser is error {
+        return config:createresponse(false, newUser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // Insert pharmacy-specific data into the 'pharmacies' collection
+    var newPharmacy = db:insertOneIntoCollection("pharmacies", pharmacy.pharmacyData);
+    if newPharmacy is error {
+        return config:createresponse(false, newPharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // Return a success response
+    return config:createresponse(true, "Pharmacy and user added successfully.", pharmacy.toJson(), http:STATUS_CREATED);
 }
 
 

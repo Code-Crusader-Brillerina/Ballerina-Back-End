@@ -160,7 +160,7 @@ public function getPrescription(http:Request req,utils:GetPrescription body) ret
     // loop throug items
         // get medicine from database
         // create finel data
-    
+     
     // get pid from token
     var uid = config:autheriseAs(req,"patient");
     if uid is error {
@@ -171,45 +171,76 @@ public function getPrescription(http:Request req,utils:GetPrescription body) ret
     if prescription is error{
         return config:createresponse(false, prescription.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
+    // --- FIX START ---
+    if prescription is null {
+        return config:createresponse(false, "Prescription not found.", {}, http:STATUS_NOT_FOUND);
+    }
+    // --- FIX END ---
 
     // get prescription fron db
     var user=  db:getDocument("users",{"uid":check prescription.pid});
     if user is error{
         return config:createresponse(false, user.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
+    // --- FIX START ---
+    if user is null {
+        return config:createresponse(false, "Patient user not found.", {}, http:STATUS_NOT_FOUND);
+    }
+    // --- FIX END ---
     json userData={
         name:check user.username ,
         phoneNumber:check user.phoneNumber ,
         email:check user.email ,
         city:check user.city ,
-        district:check user.district 
+        district:check user.district  
     };
-    
+     
     // get appoinment from db
     var appoinment=  db:getDocument("appoinments",{"aid":check prescription.aid});
     if appoinment is error{
         return config:createresponse(false, appoinment.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
+    // --- FIX START ---
+    if appoinment is null {
+        return config:createresponse(false, "Appointment not found.", {}, http:STATUS_NOT_FOUND);
+    }
+    // --- FIX END ---
 
     // get pharmacy from db
     var pharmacy=  db:getDocument("pharmacies",{"phId":check prescription.phId});
     if pharmacy is error{
         return config:createresponse(false, pharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
+    // --- FIX START ---
+    if pharmacy is null {
+        return config:createresponse(false, "Pharmacy not found.", {}, http:STATUS_NOT_FOUND);
+    }
+    // --- FIX END ---
 
     // get the doctor
     var doctor=  db:getDocument("users",{"uid":check prescription.did});
     if doctor is error{
         return config:createresponse(false, doctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-  
-
+    // --- FIX START ---
+    if doctor is null {
+        return config:createresponse(false, "Doctor not found.", {}, http:STATUS_NOT_FOUND);
+    }
+    // --- FIX END ---
+ 
     // loop throug items
     json[] arr = [];
     json[] items = <json[]> check  prescription.items;
     foreach json item in items {
         var mediId = check item.mediId;
         var medicine= check db:getDocument("medicines",{"mediId":mediId});
+        // --- FIX START ---
+        if medicine is null {
+            // It's better to handle this gracefully, e.g., by skipping the item or returning an error.
+            // For now, we'll return an error.
+            return config:createresponse(false, "Medicine not found.", {}, http:STATUS_NOT_FOUND);
+        }
+        // --- FIX END ---
         json obj = {
             mediId: mediId,
             name:check medicine.name,
@@ -362,19 +393,80 @@ public function getDoctorforPatient(http:Request req,utils:GetDoctor body)return
 }
 
 
-public function getAllPharmacis(http:Request req)returns error|http:Response{
-    var uid = config:autheriseAs(req,"patient");
+public function getAllPharmacis(http:Request req) returns http:Response|error {
+    var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
 
-    var documents =  db:getAllDocumentsFromCollection("pharmacies");
-    if documents is error{
-        return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    var pharmacyDocuments = db:getAllDocumentsFromCollection("pharmacies");
+    if pharmacyDocuments is error {
+        return config:createresponse(false, pharmacyDocuments.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    return config:createresponse(true, "Pharmacies found succesfully.", documents, http:STATUS_OK);
 
+    json[] combinedPharmacies = [];
+    foreach json pharmacyDoc in pharmacyDocuments {
+
+        // --- Start of Fix ---
+        // Safely access the 'phId' field. Using `.` on a json type returns `json|error`.
+        var phIdResult = pharmacyDoc.phId;
+
+        // 1. Handle the case where accessing 'phId' returns an error (e.g., field is missing).
+        if phIdResult is error {
+            // Log this issue or simply skip the malformed document.
+            continue;
+        }
+
+        // 2. Ensure the retrieved phId is a string before using it.
+        if phIdResult !is string {
+            // The phId has an unexpected type. Skip this document.
+            continue;
+        }
+        
+        // Now, phIdResult is guaranteed to be a string.
+        string phId = phIdResult;
+
+        // 3. Find the user document using the guaranteed string ID.
+        var userDocResult = db:getDocument("users", {"uid": phId});
+
+        // 4. Handle potential errors from the database call.
+        if userDocResult is error {
+            // Could not fetch the document from the DB. Log and skip.
+            continue;
+        }
+
+        // 5. Handle the case where no matching user document is found.
+        if userDocResult is () {
+            // This is a valid scenario (e.g., orphaned pharmacy record). Skip.
+            continue;
+        }
+        
+        // At this point, userDocResult is guaranteed to be a valid json document.
+        json userDoc = userDocResult;
+        // --- End of Fix ---
+
+        // Combine pharmacy-specific and user-specific data
+        json combinedDoc = {
+            phId: check pharmacyDoc.phId, // Safe to use 'check' now as we know it exists
+            name: check pharmacyDoc.name,
+            contactNomber: check pharmacyDoc.contactNomber,
+            userDetails: {
+                uid: check userDoc.uid,
+                username: check userDoc.username,
+                email: check userDoc.email,
+                phoneNumber: check userDoc.phoneNumber,
+                city: check userDoc.city,
+                district: check userDoc.district,
+                profilepic: check userDoc.profilepic
+            }
+        };
+        combinedPharmacies.push(combinedDoc);
+    }
+
+    return config:createresponse(true, "Pharmacies found successfully.", combinedPharmacies, http:STATUS_OK);
 }
+
+
 
 public function updatePrescriptionPharmacy(http:Request req,utils:UpdatePrescriptionPharmacy body)returns error|http:Response{
     var uid = config:autheriseAs(req,"patient");
