@@ -29,5 +29,9 @@ public type Medicine record {
     string form;
 };
 
+public type DeleteDoctor record {
+    string did;
+};
+
 
 

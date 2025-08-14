@@ -55,5 +55,8 @@ public type DoctorGetQueue record {
     string date;
 };
 
+public type GetAppoinment record {
+    string aid;
+};
 
  
