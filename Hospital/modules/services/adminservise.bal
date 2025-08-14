@@ -35,4 +35,8 @@ service /admin on config:serverListener {
     resource function get getAllMedicines(http:Request req) returns http:Response|error {
         return routes:getAllMedicines(req);
     }
+
+    resource function delete deleteDoctor(http:Request req,@http:Payload utils:DeleteDoctor body) returns http:Response|error {
+        return routes:deleteDoctor(req,body);
+    }
 }

@@ -91,3 +91,22 @@ public function getAllMedicines(http:Request req) returns http:Response|error{
     // mach and return json object
     return config:createresponse(true, "Medicine details found successfully.", documents, http:STATUS_OK);
 }
+
+
+public  function deleteDoctor(http:Request req,utils:DeleteDoctor body) returns http:Response|error {
+    // get body
+    // delete row
+    var uid = config:autheriseAs(req,"admin");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    var doctor =  db:deleteDocument("doctors",{did:body.did});
+    if doctor is error{
+        return config:createresponse(false, doctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    var user =  db:deleteDocument("users",{uid:body.did});
+    if user is error{
+        return config:createresponse(false, user.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Medicine details found successfully.", doctor.toJson(), http:STATUS_OK);
+}

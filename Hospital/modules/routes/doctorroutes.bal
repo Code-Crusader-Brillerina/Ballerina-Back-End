@@ -4,7 +4,7 @@ import Hospital.functions;
 import Hospital.utils;
 
 import ballerina/http;
-import ballerina/io;
+// import ballerina/io;
 
 public function updateDoctor(http:Request req, utils:DoctorUpdateBody body) returns http:Response|error {
     // get email
@@ -192,9 +192,7 @@ public function doctorGetAllAppoinments(http:Request req) returns error|http:Res
     foreach json item in documents {
         var pid = check item.pid;
         var user = check db:getDocument("users", {"uid": pid});
-        io:println(user);
         var patient = check db:getDocument("patients", {"pid": pid});
-        io:println(patient);
         json obj = {
             aid: check item.aid,
             did: uid,

@@ -111,6 +111,20 @@ public function getDocumentList(string collectionName,map<json> value) returns j
     return documents;
 }
 
+public function deleteDocument(string collectionName, map<json> filter) returns record {}|error {
+    var collection = getDBCollection(collectionName);
+    if collection is error {
+        return error("Failed to get the connection with the database.");
+    }
+    mongodb:Collection resultCollection = collection;
+
+    var deleteResult = resultCollection->deleteOne(filter);
+    if deleteResult is error {
+        return error("Failed inserting the document.");
+    }
+    return deleteResult;
+}
+
 
 
 
