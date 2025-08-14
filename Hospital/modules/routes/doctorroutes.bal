@@ -221,3 +221,19 @@ public function doctorGetAllAppoinments(http:Request req) returns error|http:Res
     return config:createresponse(true, "Apoinments found succesfully.", arr, http:STATUS_OK);
 
 }
+
+public function getAppoinment(http:Request req,utils:GetAppoinment body) returns error|http:Response{
+    // get pid from token
+    var uid = config:autheriseAs(req,"doctor");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    // get prescription fron db
+    var appoinment=  db:getDocument("appoinments",{"aid":body.aid});
+    if appoinment is error{
+        return config:createresponse(false, appoinment.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    return config:createresponse(true, "Prescription found succesfully.", appoinment, http:STATUS_OK);
+
+}
