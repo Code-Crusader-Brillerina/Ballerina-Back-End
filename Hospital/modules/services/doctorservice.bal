@@ -41,4 +41,8 @@ service /doctor on config:serverListener {
     resource function post getQueue(http:Request req,@http:Payload utils:DoctorGetQueue body) returns http:Response|error {
         return routes:doctorGetQueue(req,body);
     }
+
+    resource function get getAllAppoinments(http:Request req) returns http:Response|error {
+        return routes:doctorGetAllAppoinments(req);
+    }
 }
