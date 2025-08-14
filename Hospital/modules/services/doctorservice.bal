@@ -6,7 +6,7 @@ import Hospital.utils;
 
 @http:ServiceConfig {
     cors: {
-        allowOrigins: ["http://192.168.8.102"],
+        allowOrigins: [],
         allowCredentials: true,
         allowHeaders: ["Content-Type", "Authorization"],
         exposeHeaders: ["X-CUSTOM-HEADER"],
