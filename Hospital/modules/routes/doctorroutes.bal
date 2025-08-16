@@ -176,50 +176,83 @@ public function doctorGetAllAppoinments(http:Request req) returns error|http:Res
     // get allapoinments relate to the uid
     // get doctors related to the apoinment 
     // send the result
-
+    
     // get pid from token
     var uid = config:autheriseAs(req, "doctor");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
+    
     // get allapoinments relate to the uid
     var documents = db:getDocumentList("appoinments", {did: uid});
     if documents is error {
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-
+    
     json[] arr = [];
     foreach json item in documents {
-        var pid = check item.pid;
-        var user = check db:getDocument("users", {"uid": pid});
-        var patient = check db:getDocument("patients", {"pid": pid});
+        // Add error handling for each extraction
+        json|error pidResult = item.pid;
+        if pidResult is error {
+            continue; // Skip this item if pid is missing
+        }
+        var pid = pidResult;
+        
+        var userResult = db:getDocument("users", {"uid": pid});
+        if userResult is error {
+            continue; // Skip this item if user not found
+        }
+        var user = userResult;
+        
+        var patientResult = db:getDocument("patients", {"pid": pid});
+        if patientResult is error {
+            continue; // Skip this item if patient not found
+        }
+        var patient = patientResult;
+        
+        // Create the response object with proper error handling
+        json|error aidResult = item.aid;
+        json|error dateResult = item.date;
+        json|error timeResult = item.time;
+        json|error statusResult = item.status;
+        json|error descriptionResult = item.description;
+        json|error reportsResult = item.reports;
+        json|error paymentStateResult = item.paymentState;
+        
+        json|error usernameResult = user.username;
+        json|error phoneNumberResult = user.phoneNumber;
+        json|error cityResult = user.city;
+        json|error profilepicResult = user.profilepic;
+        
+        json|error dobResult = patient.DOB;
+        json|error genderResult = patient.gender;
+        
         json obj = {
-            aid: check item.aid,
+            aid: aidResult is json ? aidResult : "",
             did: uid,
             patient: {
                 pid: pid,
-                name: check user.username,
-                phoneNumber: check user.phoneNumber,
-                city: check user.city,
-                profilepic: check user.profilepic,
-                DOB: check patient.DOB,
-                gender: check patient.gender
+                name: usernameResult is json ? usernameResult : "",
+                phoneNumber: phoneNumberResult is json ? phoneNumberResult : "",
+                city: cityResult is json ? cityResult : "",
+                profilepic: profilepicResult is json ? profilepicResult : "",
+                DOB: dobResult is json ? dobResult : "",
+                gender: genderResult is json ? genderResult : ""
             },
-            date: check item.date,
-            time: check item.time,
-            status: check item.status,
-            description: check item.description,
-            reports: check item.reports,
-            paymentState: check item.paymentState
-
+            date: dateResult is json ? dateResult : "",
+            time: timeResult is json ? timeResult : "",
+            status: statusResult is json ? statusResult : "",
+            description: descriptionResult is json ? descriptionResult : "",
+            reports: reportsResult is json ? reportsResult : [],
+            paymentState: paymentStateResult is json ? paymentStateResult : ""
         };
-
-        arr.push(obj.toJson());
+        
+        // Push the json object directly without .toJson()
+        arr.push(obj);
     }
-    return config:createresponse(true, "Apoinments found succesfully.", arr, http:STATUS_OK);
-
+    
+    return config:createresponse(true, "Appointments found successfully.", arr, http:STATUS_OK);
 }
-
 public function getAppoinment(http:Request req,utils:GetAppoinment body) returns error|http:Response{
     // get pid from token
     var uid = config:autheriseAs(req,"doctor");
