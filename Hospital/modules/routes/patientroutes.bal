@@ -290,7 +290,7 @@ public function getAllAppoinments(http:Request req) returns error|http:Response{
     // get allapoinments relate to the uid
     // get doctors related to the apoinment 
     // send the result
-
+    
     // get pid from token
     var uid = config:autheriseAs(req,"patient");
     if uid is error {
@@ -305,8 +305,18 @@ public function getAllAppoinments(http:Request req) returns error|http:Response{
     json[] arr = [];
     foreach json item in documents {
         var did = check item.did;
-        var user= check db:getDocument("users",{"uid":did});
-        var doctor= check db:getDocument("doctors",{"did":did});
+        // --- FIX START ---
+        var user = check db:getDocument("users", {"uid": did.toJson()}); // Explicitly cast 'did' to json
+        var doctor = check db:getDocument("doctors", {"did": did.toJson()}); // Do the same for 'doctor'
+        // --- FIX END ---
+        
+        // You should also check for `null` results from `getDocument`
+        if user is null || doctor is null {
+            // Handle cases where a related user or doctor is not found
+            // This prevents future errors if data is inconsistent.
+            continue; // Skip this appointment or return an error as appropriate
+        }
+        
         json obj = {
             aid:check item.aid,
             pid:uid,
@@ -479,4 +489,202 @@ public function updatePrescriptionPharmacy(http:Request req,utils:UpdatePrescrip
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     return config:createresponse(true, "Prescription pharmacy updated succesfully.", body.toJson(), http:STATUS_OK);
+}
+
+
+
+
+public function getAllPrescriptions(http:Request req) returns error|http:Response {
+    // get pid from token
+    var uid = config:autheriseAs(req,"patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    // get all prescriptions related to the uid
+    var prescriptions = db:getDocumentList("prescriptions", {pid: uid});
+    if prescriptions is error {
+        return config:createresponse(false, prescriptions.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    
+    json[] allPrescriptions = [];
+
+    foreach json prescriptionDoc in prescriptions {
+        // Get related appointment
+        var aid = check prescriptionDoc.aid;
+        var appoinment = db:getDocument("appoinments", {"aid": aid});
+        if appoinment is error || appoinment is null {
+            // Handle error or missing appointment, maybe log and skip, or return an error.
+            // For now, we'll return an error.
+            return config:createresponse(false, "Appointment not found for prescription.", {}, http:STATUS_NOT_FOUND);
+        }
+        
+        // Get related doctor
+        var did = check prescriptionDoc.did;
+        var doctorUser = db:getDocument("users", {"uid": did});
+        if doctorUser is error || doctorUser is null {
+            return config:createresponse(false, "Doctor user not found.", {}, http:STATUS_NOT_FOUND);
+        }
+        
+        // Get related pharmacy
+        var phId = check prescriptionDoc.phId;
+        var pharmacyDoc = db:getDocument("pharmacies", {"phId": phId});
+        if pharmacyDoc is error || pharmacyDoc is null {
+            return config:createresponse(false, "Pharmacy not found.", {}, http:STATUS_NOT_FOUND);
+        }
+
+        // Get related patient user data for the current user
+        var patientUser = db:getDocument("users", {"uid": uid.toString()});
+        if patientUser is error || patientUser is null {
+            return config:createresponse(false, "Patient user not found.", {}, http:STATUS_NOT_FOUND);
+        }
+        
+        // Loop through items to get medicine details
+        json[] prescriptionItems = [];
+        json[]? items = <json[]?> check prescriptionDoc.items;
+        if items is json[] {
+            foreach json item in items {
+                var mediId = check item.mediId;
+                var medicine = db:getDocument("medicines", {"mediId": mediId});
+                if medicine is error || medicine is null {
+                    return config:createresponse(false, "Medicine not found.", {}, http:STATUS_NOT_FOUND);
+                }
+
+                json combinedItem = {
+                    mediId: mediId,
+                    name: check medicine.name,
+                    strength: check medicine.strength,
+                    form: check medicine.form,
+                    preItemId: check item.preItemId,
+                    dosage: check item.dosage,
+                    frequency: check item.frequency,
+                    duration: check item.duration,
+                    quantity: check item.quantity,
+                    instructions: check item.instructions
+                };
+                prescriptionItems.push(combinedItem);
+            }
+        }
+        
+        // Construct the final prescription object
+        json finalPrescription = {
+            preId: check prescriptionDoc.preId,
+            patient: {
+                name: check patientUser.username,
+                phoneNumber: check patientUser.phoneNumber,
+                email: check patientUser.email,
+                city: check patientUser.city,
+                district: check patientUser.district
+            },
+            doctor: {
+                name: check doctorUser.username,
+                profilepic: check doctorUser.profilepic
+            },
+            appoinment: appoinment,
+            dateTime: check prescriptionDoc.dateTime,
+            diliveryMethod: check prescriptionDoc.diliveryMethod,
+            pharmacy: pharmacyDoc,
+            status: check prescriptionDoc.status,
+            note: check prescriptionDoc.note,
+            items: prescriptionItems
+        };
+        
+        allPrescriptions.push(finalPrescription);
+    }
+    
+    return config:createresponse(true, "All prescriptions found successfully.", allPrescriptions, http:STATUS_OK);
+}
+
+
+public function getAppointmentDetailsById(http:Request req, string aid) returns http:Response|error {
+    // 1. Authorize the patient
+    var uid = config:autheriseAs(req, "patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    // 2. Get the appointment details using the provided aid
+    var appointment = db:getDocument("appoinments", {"aid": aid});
+    if appointment is error {
+        return config:createresponse(false, appointment.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if appointment is null {
+        return config:createresponse(false, "Appointment not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // 3. Ensure the authenticated patient is the owner of this appointment
+    var appointmentPid = check appointment.pid;
+    if (appointmentPid != uid) {
+        return config:createresponse(false, "Unauthorized access to appointment.", {}, http:STATUS_FORBIDDEN);
+    }
+
+    // 4. Get the doctor's details associated with this appointment
+    var did = check appointment.did;
+    var doctorUser = db:getDocument("users", {"uid": did});
+    if doctorUser is error || doctorUser is null {
+        return config:createresponse(false, "Doctor user not found.", {}, http:STATUS_NOT_FOUND);
+    }
+    var doctorDetails = db:getDocument("doctors", {"did": did});
+    if doctorDetails is error || doctorDetails is null {
+        return config:createresponse(false, "Doctor details not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // 5. Combine the data into a single JSON object
+    json combinedDetails = {
+        aid: check appointment.aid,
+        pid: check appointment.pid,
+        date: check appointment.date,
+        time: check appointment.time,
+        status: check appointment.status,
+        description: check appointment.description,
+        reports: check appointment.reports,
+        paymentState: check appointment.paymentState,
+        doctor: {
+            did: did,
+            name: check doctorUser.username,
+            profilepic: check doctorUser.profilepic,
+            specialization: check doctorDetails.specialization,
+            licenseNomber: check doctorDetails.licenseNomber,
+            experience: check doctorDetails.experience,
+            consultationFee: check doctorDetails.consultationFee,
+            availableTimes: check doctorDetails.availableTimes,
+            description: check doctorDetails.description
+        }
+    };
+
+    return config:createresponse(true, "Appointment details found successfully.", combinedDetails, http:STATUS_OK);
+}
+
+
+public function updateAppointmentStatusAndPayment(http:Request req, string aid) returns http:Response|error {
+    // 1. Authorize the patient
+    var uid = config:autheriseAs(req, "patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    
+    // 2. Define the changes to be made
+    // The request body is empty, so we hardcode the updates here.
+    map<json> updates = {
+        "status": "scheduled",
+        "paymentState": "paid"
+    };
+
+    // 3. Update the document in the database
+    // We update the document where the 'aid' matches and the 'pid' matches the authenticated patient's uid.
+    // This ensures that only the owner can update their own appointment.
+    var result = db:updateDocument("appoinments", {"aid": aid, "pid": uid}, updates);
+    if result is error {
+        return config:createresponse(false, result.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // 4. Retrieve the updated appointment to return in the response
+    var updatedAppointment = db:getDocument("appoinments", {"aid": aid});
+    if updatedAppointment is error || updatedAppointment is null {
+        // This case should ideally not happen, but it's good practice to handle it.
+        return config:createresponse(false, "Updated appointment not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // 5. Return a successful response with the updated data
+    return config:createresponse(true, "Appointment status and payment updated successfully.", updatedAppointment, http:STATUS_OK);
 }
