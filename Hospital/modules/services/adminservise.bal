@@ -38,6 +38,11 @@ resource function post addPharmacy(http:Request req, @http:Payload utils:Pharmac
         return routes:getAllMedicines(req);
     }
 
+    resource function get getAllDoctors(http:Request req) returns http:Response|error {
+        return routes:allGetDoctors(req);
+    }
+   
+
     resource function delete deleteDoctor(http:Request req,@http:Payload utils:DeleteDoctor body) returns http:Response|error {
         return routes:deleteDoctor(req,body);
     }

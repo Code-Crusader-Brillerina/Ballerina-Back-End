@@ -126,6 +126,20 @@ public function getAllMedicines(http:Request req) returns http:Response|error{
     return config:createresponse(true, "Medicine details found successfully.", documents, http:STATUS_OK);
 }
 
+public function allGetDoctors(http:Request req) returns http:Response|error{
+    var uid = config:autheriseAs(req,"admin");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    // get whole Doctor collection
+    var documents =  db:getAllDocumentsFromCollection("doctors");
+    if documents is error{
+        return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    // mach and return json object
+    return config:createresponse(true, "Doctor details found successfully.", documents, http:STATUS_OK);
+}
+
 
 public  function deleteDoctor(http:Request req,utils:DeleteDoctor body) returns http:Response|error {
     // get body
