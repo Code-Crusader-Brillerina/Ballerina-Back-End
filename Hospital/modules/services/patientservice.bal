@@ -63,4 +63,16 @@ service /patient on config:serverListener {
         return routes:updatePrescriptionPharmacy(req, body);
     }
 
+    resource function get getAllPrescriptions(http:Request req) returns http:Response|error {
+        return routes:getAllPrescriptions(req);
+    }
+
+    resource function get appointment/[string aid](http:Request req) returns http:Response|error {
+        return routes:getAppointmentDetailsById(req, aid);
+    }
+
+    resource function put appointment/[string aid](http:Request req) returns http:Response|error {
+        return routes:updateAppointmentStatusAndPayment(req, aid);
+    }
+
 }
