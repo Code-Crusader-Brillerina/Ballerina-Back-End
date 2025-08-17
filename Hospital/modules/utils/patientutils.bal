@@ -55,4 +55,5 @@ public type CalculatePricesRequest record {
 
 public type UpdatePrescriptionStatusBody record {
     string preId;
+    string phId; 
 };

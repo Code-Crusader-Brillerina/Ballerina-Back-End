@@ -793,6 +793,8 @@ public function calculatePrescriptionPrices(http:Request req, utils:CalculatePri
 }
 
 
+// in patient_routes.bal
+
 public function updatePrescriptionStatus(http:Request req, utils:UpdatePrescriptionStatusBody body) returns http:Response|error {
     // 1. Authorize the user as a patient and get their ID.
     var uid = config:autheriseAs(req, "patient");
@@ -815,10 +817,11 @@ public function updatePrescriptionStatus(http:Request req, utils:UpdatePrescript
     }
 
     // 4. --- THIS IS THE CHANGE ---
-    // Define the new updates to be applied.
+    // Define the new updates, now including the phId from the request body.
     map<json> updates = {
         "diliveryMethod": "paid",
-        "status": "order confirmed"
+        "status": "order confirmed",
+        "phId": body.phId
     };
     var result = db:updateDocument("prescriptions", {"preId": body.preId}, updates);
 
