@@ -52,3 +52,7 @@ public type UpdatePrescriptionPharmacy record {
 public type CalculatePricesRequest record {
     string preId;
 };
+
+public type UpdatePrescriptionStatusBody record {
+    string preId;
+};

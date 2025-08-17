@@ -791,3 +791,41 @@ public function calculatePrescriptionPrices(http:Request req, utils:CalculatePri
     // 10. Return the final sorted list.
     return config:createresponse(true, "Prescription pricing calculated successfully.", finalSortedResults, http:STATUS_OK);
 }
+
+
+public function updatePrescriptionStatus(http:Request req, utils:UpdatePrescriptionStatusBody body) returns http:Response|error {
+    // 1. Authorize the user as a patient and get their ID.
+    var uid = config:autheriseAs(req, "patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    // 2. Find the prescription by its ID.
+    var prescription = db:getDocument("prescriptions", {"preId": body.preId});
+    if prescription is error {
+        return config:createresponse(false, prescription.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if prescription is () {
+        return config:createresponse(false, "Prescription not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // 3. IMPORTANT: Verify that the logged-in patient owns this prescription.
+    if check prescription.pid != uid {
+        return config:createresponse(false, "You are not authorized to update this prescription.", {}, http:STATUS_FORBIDDEN);
+    }
+
+    // 4. --- THIS IS THE CHANGE ---
+    // Define the new updates to be applied.
+    map<json> updates = {
+        "diliveryMethod": "paid",
+        "status": "order confirmed"
+    };
+    var result = db:updateDocument("prescriptions", {"preId": body.preId}, updates);
+
+    if result is error {
+        return config:createresponse(false, "Failed to update prescription status.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // 5. Return a success response.
+    return config:createresponse(true, "Prescription successfully confirmed and marked as paid.", {}, http:STATUS_OK);
+}
