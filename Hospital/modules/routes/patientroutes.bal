@@ -1,12 +1,13 @@
-import ballerina/http;
+import Hospital.config;
 // import ballerina/io;
 
 import Hospital.db;
-import Hospital.utils;
-import Hospital.config;
 import Hospital.functions;
+import Hospital.utils;
 
-public function updatePatient(http:Request req,utils:PatientUpdateBody body) returns http:Response|error {
+import ballerina/http;
+
+public function updatePatient(http:Request req, utils:PatientUpdateBody body) returns http:Response|error {
     // get email
     // remove email
     // remove email
@@ -16,26 +17,26 @@ public function updatePatient(http:Request req,utils:PatientUpdateBody body) ret
     // add data to patients
     // update the token
 
-    var uid = config:autheriseAs(req,"patient");
+    var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
     // get email
-    var existuser=db:getUserById(uid.toString());
+    var existuser = db:getUserById(uid.toString());
     if existuser is error {
         return config:createresponse(false, existuser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     if existuser is null {
         return config:createresponse(false, "User cannot fined.", {}, http:STATUS_NOT_FOUND);
     }
-    var existMail=existuser.email;
+    var existMail = existuser.email;
     if existMail is error {
         return config:createresponse(false, existMail.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
     // remove email
-    var removeemail = db:removeOneFromDocument("users",{"uid":uid},{"email":""});
-    if removeemail is error{
+    var removeemail = db:removeOneFromDocument("users", {"uid": uid}, {"email": ""});
+    if removeemail is error {
         return config:createresponse(false, removeemail.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     // cheack email exist
@@ -45,39 +46,38 @@ public function updatePatient(http:Request req,utils:PatientUpdateBody body) ret
     }
     // if exist add email again and remove the error
     if exist is true {
-        var addemail = db:updateDocument("users",{"uid":uid},{"email":existMail});
-        if addemail is error{
+        var addemail = db:updateDocument("users", {"uid": uid}, {"email": existMail});
+        if addemail is error {
             return config:createresponse(false, addemail.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
         }
         return config:createresponse(false, "User email already exists.", {}, http:STATUS_CONFLICT);
     }
-    
 
-    var newUser =db:updateUser(uid.toString(),body.userData);
-    if newUser is error{
+    var newUser = db:updateUser(uid.toString(), body.userData);
+    if newUser is error {
         return config:createresponse(false, newUser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
     // add data to doctors
-    var newpatient = db:updatePatient(uid.toString(),body.patientData);
-    if newpatient is error{
+    var newpatient = db:updatePatient(uid.toString(), body.patientData);
+    if newpatient is error {
         return config:createresponse(false, newpatient.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
     // update the token
-    var token=functions:updateJWT(uid.toString(),"patient",body.userData);
+    var token = functions:updateJWT(uid.toString(), "patient", body.userData);
     if token is error {
         return config:createresponse(false, "Error creating JWT.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
-    http:Cookie cookie = new ("JWT", token, path = "/",secure=true);
-    return config:createresponse(true, "Patient update successful.", body.toJson(), http:STATUS_OK,cookie);
+    http:Cookie cookie = new ("JWT", token, path = "/", secure = true);
+    return config:createresponse(true, "Patient update successful.", body.toJson(), http:STATUS_OK, cookie);
 }
 
-public function getAllDoctors(http:Request req) returns http:Response|error{
+public function getAllDoctors(http:Request req) returns http:Response|error {
     // get whole Doctor collection
-    var documents =  db:getAllDocumentsFromCollection("doctors");
-    if documents is error{
+    var documents = db:getAllDocumentsFromCollection("doctors");
+    if documents is error {
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
@@ -85,7 +85,7 @@ public function getAllDoctors(http:Request req) returns http:Response|error{
     json[] arr = [];
     foreach json item in documents {
         var did = check item.did;
-        var user= check db:getDocument("users",{"uid":did});
+        var user = check db:getDocument("users", {"uid": did});
         json obj = {
             did: did,
             specialization: check item.specialization,
@@ -104,19 +104,19 @@ public function getAllDoctors(http:Request req) returns http:Response|error{
     return config:createresponse(true, "Doctors details found successfully.", arr, http:STATUS_OK);
 }
 
-public function createAppointment(http:Request req,utils:Appoinment body) returns http:Response|error {
+public function createAppointment(http:Request req, utils:Appoinment body) returns http:Response|error {
     // autherise as pationt and get the uid
     // add uid to the apoinment body to pid
     // save theapoinment on db
 
     // autherise as pationt and get the uid
-    var uid = config:autheriseAs(req,"patient");
+    var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
 
     // add uid to the apoinment body to pid
-    body.pid=uid.toString();
+    body.pid = uid.toString();
 
     var newAppoinment = db:insertOneIntoCollection("appoinments", body);
     if newAppoinment is error {
@@ -125,180 +125,167 @@ public function createAppointment(http:Request req,utils:Appoinment body) return
     return config:createresponse(true, "Appinment created successfully.", body.toJson(), http:STATUS_OK);
 }
 
-public function getQueue(utils:GetQueue body) returns http:Response|error{
+public function getQueue(utils:GetQueue body) returns http:Response|error {
     // get did
     // get date
     // find all the feilds in apoinment
-    var documents =  db:getDocumentList("appoinments",{did:body.did,date:body.date});
-    if documents is error{
+    var documents = db:getDocumentList("appoinments", {did: body.did, date: body.date});
+    if documents is error {
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     return config:createresponse(true, "Doctors details found successfully.", documents, http:STATUS_OK);
-    
+
 }
 
-
-
-public function updateAppoinmentPayment(http:Request req,@http:Payload utils:UpdateAppoinmentPayment body) returns http:Response|error {
-    var uid = config:autheriseAs(req,"patient");
+public function updateAppoinmentPayment(http:Request req, @http:Payload utils:UpdateAppoinmentPayment body) returns http:Response|error {
+    var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
-    var newvalue = db:updateDocument("appoinments",{"aid":body.aid},{"paymentState":"paid"});
-    if newvalue is error{
+    var newvalue = db:updateDocument("appoinments", {"aid": body.aid}, {"paymentState": "paid"});
+    if newvalue is error {
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     return config:createresponse(true, "Appoinment Payment status updated succesfully.", body.toJson(), http:STATUS_OK);
 }
 
-
-public function getPrescription(http:Request req,utils:GetPrescription body) returns error|http:Response{
+public function getPrescription(http:Request req, utils:GetPrescription body) returns error|http:Response {
     // get pid from token
-    // get prescription fron db
-    // get appoinment from db
-    // get pharmacy from db
-    // loop throug items
-        // get medicine from database
-        // create finel data
-     
-    // get pid from token
-    var uid = config:autheriseAs(req,"patient");
+    var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
-    // get prescription fron db
-    var prescription=  db:getDocument("prescriptions",{"preId":body.preId});
-    if prescription is error{
+
+    // get prescription from db
+    var prescription = db:getDocument("prescriptions", {"preId": body.preId});
+    if prescription is error {
         return config:createresponse(false, prescription.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    // --- FIX START ---
     if prescription is null {
         return config:createresponse(false, "Prescription not found.", {}, http:STATUS_NOT_FOUND);
     }
-    // --- FIX END ---
 
-    // get prescription fron db
-    var user=  db:getDocument("users",{"uid":check prescription.pid});
-    if user is error{
+    // get patient user data
+    var user = db:getDocument("users", {"uid": check prescription.pid});
+    if user is error {
         return config:createresponse(false, user.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    // --- FIX START ---
     if user is null {
         return config:createresponse(false, "Patient user not found.", {}, http:STATUS_NOT_FOUND);
     }
-    // --- FIX END ---
-    json userData={
-        name:check user.username ,
-        phoneNumber:check user.phoneNumber ,
-        email:check user.email ,
-        city:check user.city ,
-        district:check user.district  
-    };
-     
-    // get appoinment from db
-    var appoinment=  db:getDocument("appoinments",{"aid":check prescription.aid});
-    if appoinment is error{
+
+    // Get patient profile data (gender, DOB)
+    var patientProfile = db:getDocument("patients", {"pid": check prescription.pid});
+    if patientProfile is error {
+        return config:createresponse(false, patientProfile.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if patientProfile is null {
+        return config:createresponse(false, "Patient profile not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // get appointment from db
+    var appoinment = db:getDocument("appoinments", {"aid": check prescription.aid});
+    if appoinment is error {
         return config:createresponse(false, appoinment.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    // --- FIX START ---
     if appoinment is null {
         return config:createresponse(false, "Appointment not found.", {}, http:STATUS_NOT_FOUND);
     }
-    // --- FIX END ---
 
     // get pharmacy from db
-    var pharmacy=  db:getDocument("pharmacies",{"phId":check prescription.phId});
-    if pharmacy is error{
+    var pharmacy = db:getDocument("pharmacies", {"phId": check prescription.phId});
+    if pharmacy is error {
         return config:createresponse(false, pharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    // --- FIX START ---
     if pharmacy is null {
         return config:createresponse(false, "Pharmacy not found.", {}, http:STATUS_NOT_FOUND);
     }
-    // --- FIX END ---
 
-    // get the doctor
-    var doctor=  db:getDocument("users",{"uid":check prescription.did});
-    if doctor is error{
-        return config:createresponse(false, doctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    // get the doctor user and profile data
+    var doctorUser = db:getDocument("users", {"uid": check prescription.did});
+    if doctorUser is error {
+        return config:createresponse(false, doctorUser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    // --- FIX START ---
-    if doctor is null {
+    if doctorUser is null {
         return config:createresponse(false, "Doctor not found.", {}, http:STATUS_NOT_FOUND);
     }
-    // --- FIX END ---
- 
-    // loop throug items
+
+    // Get doctor profile data (specialization, licenseNomber, etc.)
+    var doctorProfile = db:getDocument("doctors", {"did": check prescription.did});
+    if doctorProfile is error {
+        return config:createresponse(false, doctorProfile.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if doctorProfile is null {
+        return config:createresponse(false, "Doctor profile not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // loop through items
     json[] arr = [];
-    json[] items = <json[]> check  prescription.items;
+    json[] items = <json[]>check prescription.items;
     foreach json item in items {
         var mediId = check item.mediId;
-        var medicine= check db:getDocument("medicines",{"mediId":mediId});
-        // --- FIX START ---
+        var medicine = check db:getDocument("medicines", {"mediId": mediId});
         if medicine is null {
-            // It's better to handle this gracefully, e.g., by skipping the item or returning an error.
-            // For now, we'll return an error.
             return config:createresponse(false, "Medicine not found.", {}, http:STATUS_NOT_FOUND);
         }
-        // --- FIX END ---
         json obj = {
             mediId: mediId,
-            name:check medicine.name,
-            strength:check medicine.strength,
-            form:check medicine.form,
-
-            preItemId:check item.preItemId,
-            dosage:check item.dosage,
-            frequency:check item.frequency,
-            duration:check item.duration,
-            quantity:check item.quantity,
-            instructions:check item.instructions
+            name: check medicine.name,
+            strength: check medicine.strength,
+            form: check medicine.form,
+            preItemId: check item.preItemId,
+            dosage: check item.dosage,
+            frequency: check item.frequency,
+            duration: check item.duration,
+            quantity: check item.quantity,
+            instructions: check item.instructions
         };
-
         arr.push(obj.toJson());
     }
 
     json result = {
-        preId:body.preId,
-
-        patient:userData,
-
-        doctor:{
-            name:check doctor.username,
-            profilepic:check doctor.profilepic
+        preId: body.preId,
+        patient: {
+            name: check user.username,
+            phoneNumber: check user.phoneNumber,
+            email: check user.email,
+            city: check user.city,
+            district: check user.district,
+            gender: check patientProfile.gender, // Added patient gender
+            DOB: check patientProfile.DOB // Added patient DOB
         },
-
-        appoinment:appoinment,
-
-        dateTime:check prescription.dateTime,
-        diliveryMethod:check prescription.diliveryMethod,
-
-        pharmacy:pharmacy,
-
-        status:check prescription.status,
-        note:check prescription.note,
-
-        items:arr
+        doctor: {
+            name: check doctorUser.username,
+            profilepic: check doctorUser.profilepic,
+            specialization: check doctorProfile.specialization, // Added doctor specialization
+            licenseNomber: check doctorProfile.licenseNomber // Added doctor license number
+        },
+        appoinment: appoinment,
+        dateTime: check prescription.dateTime,
+        diliveryMethod: check prescription.diliveryMethod,
+        pharmacy: pharmacy,
+        status: check prescription.status,
+        note: check prescription.note,
+        items: arr
     };
 
-    return config:createresponse(true, "Prescription found succesfully.", result, http:STATUS_OK);
-
+    return config:createresponse(true, "Prescription found successfully.", result, http:STATUS_OK);
 }
 
-public function getAllAppoinments(http:Request req) returns error|http:Response{
+public function getAllAppoinments(http:Request req) returns error|http:Response {
     // get pid from token
     // get allapoinments relate to the uid
     // get doctors related to the apoinment 
     // send the result
-    
+
     // get pid from token
-    var uid = config:autheriseAs(req,"patient");
+    var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
     // get allapoinments relate to the uid
-    var documents =  db:getDocumentList("appoinments",{pid:uid});
-    if documents is error{
+    var documents = db:getDocumentList("appoinments", {pid: uid});
+    if documents is error {
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
@@ -309,18 +296,18 @@ public function getAllAppoinments(http:Request req) returns error|http:Response{
         var user = check db:getDocument("users", {"uid": did.toJson()}); // Explicitly cast 'did' to json
         var doctor = check db:getDocument("doctors", {"did": did.toJson()}); // Do the same for 'doctor'
         // --- FIX END ---
-        
+
         // You should also check for `null` results from `getDocument`
         if user is null || doctor is null {
             // Handle cases where a related user or doctor is not found
             // This prevents future errors if data is inconsistent.
             continue; // Skip this appointment or return an error as appropriate
         }
-        
+
         json obj = {
-            aid:check item.aid,
-            pid:uid,
-            doctor:{
+            aid: check item.aid,
+            pid: uid,
+            doctor: {
                 did: did,
                 name: check user.username,
                 profilepic: check user.profilepic,
@@ -331,13 +318,13 @@ public function getAllAppoinments(http:Request req) returns error|http:Response{
                 availableTimes: check doctor.availableTimes,
                 description: check doctor.description
             },
-            date:check item.date,
-            time:check item.time,
-            status:check item.status,
-            description:check item.description,
-            reports:check item.reports,
-            paymentState:check item.paymentState
-            
+            date: check item.date,
+            time: check item.time,
+            status: check item.status,
+            description: check item.description,
+            reports: check item.reports,
+            paymentState: check item.paymentState
+
         };
 
         arr.push(obj.toJson());
@@ -346,62 +333,60 @@ public function getAllAppoinments(http:Request req) returns error|http:Response{
 
 }
 
-public function getPatient(http:Request req) returns error|http:Response{
-    var uid = config:autheriseAs(req,"patient");
+public function getPatient(http:Request req) returns error|http:Response {
+    var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
-    var user=  db:getDocument("users",{"uid":uid});
-    if user is error{
+    var user = db:getDocument("users", {"uid": uid});
+    if user is error {
         return config:createresponse(false, user.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
-    var partient=  db:getDocument("patients",{"pid":uid});
-    if partient is error{
+    var partient = db:getDocument("patients", {"pid": uid});
+    if partient is error {
         return config:createresponse(false, partient.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
-    json result={
-        user:user,
-        partient:partient
+    json result = {
+        user: user,
+        partient: partient
     };
     return config:createresponse(true, "Patient foud succesfully.", result, http:STATUS_OK);
 
 }
 
-
-public function getDoctorforPatient(http:Request req,utils:GetDoctor body)returns error|http:Response{
-    var uid = config:autheriseAs(req,"patient");
+public function getDoctorforPatient(http:Request req, utils:GetDoctor body) returns error|http:Response {
+    var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
-    var user=  db:getDocument("users",{"uid":body.did});
-    if user is error{
+    var user = db:getDocument("users", {"uid": body.did});
+    if user is error {
         return config:createresponse(false, user.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
-    var doctor=  db:getDocument("doctors",{"did":body.did});
-    if doctor is error{
+    var doctor = db:getDocument("doctors", {"did": body.did});
+    if doctor is error {
         return config:createresponse(false, doctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
-    json result={
-        did:check user.uid ,
-        username:check user.username ,
-        email:check user.email ,
-        profilepic:check user.profilepic ,
+    json result = {
+        did: check user.uid,
+        username: check user.username,
+        email: check user.email,
+        profilepic: check user.profilepic,
 
-        specialization:check doctor.specialization ,
-        licenseNomber:check doctor.licenseNomber ,
-        experience:check doctor.experience ,
-        consultationFee:check doctor.consultationFee ,
-        availableTimes:check doctor.availableTimes ,
-        description:check doctor.description 
+        specialization: check doctor.specialization,
+        licenseNomber: check doctor.licenseNomber,
+        experience: check doctor.experience,
+        consultationFee: check doctor.consultationFee,
+        availableTimes: check doctor.availableTimes,
+        description: check doctor.description
     };
     return config:createresponse(true, "Doctor found succesfully.", result, http:STATUS_OK);
 
 }
-
 
 public function getAllPharmacis(http:Request req) returns http:Response|error {
     var uid = config:autheriseAs(req, "patient");
@@ -432,7 +417,7 @@ public function getAllPharmacis(http:Request req) returns http:Response|error {
             // The phId has an unexpected type. Skip this document.
             continue;
         }
-        
+
         // Now, phIdResult is guaranteed to be a string.
         string phId = phIdResult;
 
@@ -450,7 +435,7 @@ public function getAllPharmacis(http:Request req) returns http:Response|error {
             // This is a valid scenario (e.g., orphaned pharmacy record). Skip.
             continue;
         }
-        
+
         // At this point, userDocResult is guaranteed to be a valid json document.
         json userDoc = userDocResult;
         // --- End of Fix ---
@@ -476,27 +461,22 @@ public function getAllPharmacis(http:Request req) returns http:Response|error {
     return config:createresponse(true, "Pharmacies found successfully.", combinedPharmacies, http:STATUS_OK);
 }
 
-
-
-public function updatePrescriptionPharmacy(http:Request req,utils:UpdatePrescriptionPharmacy body)returns error|http:Response{
-    var uid = config:autheriseAs(req,"patient");
+public function updatePrescriptionPharmacy(http:Request req, utils:UpdatePrescriptionPharmacy body) returns error|http:Response {
+    var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
 
-    var newvalue = db:updateDocument("prescriptions",{"preId":body.preId},{"phId":body.phId});
-    if newvalue is error{
+    var newvalue = db:updateDocument("prescriptions", {"preId": body.preId}, {"phId": body.phId});
+    if newvalue is error {
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     return config:createresponse(true, "Prescription pharmacy updated succesfully.", body.toJson(), http:STATUS_OK);
 }
 
-
-
-
 public function getAllPrescriptions(http:Request req) returns error|http:Response {
     // get pid from token
-    var uid = config:autheriseAs(req,"patient");
+    var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
@@ -506,7 +486,7 @@ public function getAllPrescriptions(http:Request req) returns error|http:Respons
     if prescriptions is error {
         return config:createresponse(false, prescriptions.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    
+
     json[] allPrescriptions = [];
 
     foreach json prescriptionDoc in prescriptions {
@@ -518,14 +498,14 @@ public function getAllPrescriptions(http:Request req) returns error|http:Respons
             // For now, we'll return an error.
             return config:createresponse(false, "Appointment not found for prescription.", {}, http:STATUS_NOT_FOUND);
         }
-        
+
         // Get related doctor
         var did = check prescriptionDoc.did;
         var doctorUser = db:getDocument("users", {"uid": did});
         if doctorUser is error || doctorUser is null {
             return config:createresponse(false, "Doctor user not found.", {}, http:STATUS_NOT_FOUND);
         }
-        
+
         // Get related pharmacy
         var phId = check prescriptionDoc.phId;
         var pharmacyDoc = db:getDocument("pharmacies", {"phId": phId});
@@ -538,10 +518,10 @@ public function getAllPrescriptions(http:Request req) returns error|http:Respons
         if patientUser is error || patientUser is null {
             return config:createresponse(false, "Patient user not found.", {}, http:STATUS_NOT_FOUND);
         }
-        
+
         // Loop through items to get medicine details
         json[] prescriptionItems = [];
-        json[]? items = <json[]?> check prescriptionDoc.items;
+        json[]? items = <json[]?>check prescriptionDoc.items;
         if items is json[] {
             foreach json item in items {
                 var mediId = check item.mediId;
@@ -565,7 +545,7 @@ public function getAllPrescriptions(http:Request req) returns error|http:Respons
                 prescriptionItems.push(combinedItem);
             }
         }
-        
+
         // Construct the final prescription object
         json finalPrescription = {
             preId: check prescriptionDoc.preId,
@@ -588,13 +568,12 @@ public function getAllPrescriptions(http:Request req) returns error|http:Respons
             note: check prescriptionDoc.note,
             items: prescriptionItems
         };
-        
+
         allPrescriptions.push(finalPrescription);
     }
-    
+
     return config:createresponse(true, "All prescriptions found successfully.", allPrescriptions, http:STATUS_OK);
 }
-
 
 public function getAppointmentDetailsById(http:Request req, string aid) returns http:Response|error {
     // 1. Authorize the patient
@@ -655,14 +634,13 @@ public function getAppointmentDetailsById(http:Request req, string aid) returns 
     return config:createresponse(true, "Appointment details found successfully.", combinedDetails, http:STATUS_OK);
 }
 
-
 public function updateAppointmentStatusAndPayment(http:Request req, string aid) returns http:Response|error {
     // 1. Authorize the patient
     var uid = config:autheriseAs(req, "patient");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
-    
+
     // 2. Define the changes to be made
     // The request body is empty, so we hardcode the updates here.
     map<json> updates = {
@@ -687,4 +665,129 @@ public function updateAppointmentStatusAndPayment(http:Request req, string aid) 
 
     // 5. Return a successful response with the updated data
     return config:createresponse(true, "Appointment status and payment updated successfully.", updatedAppointment, http:STATUS_OK);
+}
+
+public function calculatePrescriptionPrices(http:Request req, utils:CalculatePricesRequest body) returns http:Response|error {
+    // 1. Authorize the patient and get their user ID.
+    var uid = config:autheriseAs(req, "patient");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    // Get logged-in user's location for sorting.
+    var loggedInUserDetails = db:getDocument("users", {"uid": uid});
+    if loggedInUserDetails is error || loggedInUserDetails is () {
+        return config:createresponse(false, "Could not retrieve details for the logged-in user.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    string userCity = check loggedInUserDetails.city;
+    string userDistrict = check loggedInUserDetails.district;
+
+    // 2. Fetch the prescription.
+    var prescription = db:getDocument("prescriptions", {"preId": body.preId});
+    if prescription is error {
+        return config:createresponse(false, prescription.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if prescription is () {
+        return config:createresponse(false, "Prescription not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // 3. Verify ownership.
+    if check prescription.pid != uid {
+        return config:createresponse(false, "You are not authorized to access this prescription.", {}, http:STATUS_FORBIDDEN);
+    }
+
+    // 4. Get medicine items.
+    json[]|error itemsResult = <json[]|error>prescription.items;
+    if itemsResult is error || itemsResult.length() == 0 {
+        return config:createresponse(false, "Prescription contains no items to price.", {}, http:STATUS_BAD_REQUEST);
+    }
+    json[] items = itemsResult;
+
+    // 5. Get all pharmacies.
+    var allPharmacies = db:getAllDocumentsFromCollection("pharmacies");
+    if allPharmacies is error {
+        return config:createresponse(false, allPharmacies.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // --- MODIFIED: Create three lists for the new sorting order ---
+    json[] cityMatchPharmacies = [];
+    json[] districtMatchPharmacies = [];
+    json[] otherPharmacies = [];
+
+    // 6. Loop through each pharmacy.
+    foreach json pharmacy in allPharmacies {
+        decimal totalPrice = 0.0;
+        boolean canFulfill = true;
+        json[] itemizedPrices = [];
+        string phId = check pharmacy.phId;
+
+        // 7. Check inventory for each required medicine.
+        foreach json item in items {
+            string mediId = check item.mediId;
+            var inventoryItem = db:getDocument("pharmacyInventory", {"pharmacyId": phId, "medicineId": mediId});
+
+            if inventoryItem is json && inventoryItem !is () {
+                decimal price = check decimal:fromString(check inventoryItem.price);
+                int quantity = check int:fromString(check item.quantity);
+                decimal subTotal = price * quantity;
+                totalPrice += subTotal;
+
+                var medicineDetails = db:getDocument("medicines", {"mediId": mediId});
+                if medicineDetails is error || medicineDetails is () {
+                    canFulfill = false;
+                    break;
+                }
+                itemizedPrices.push({
+                    medicineName: check medicineDetails.name,
+                    quantity: quantity,
+                    unitPrice: price,
+                    subTotal: subTotal
+                });
+            } else {
+                canFulfill = false;
+                break;
+            }
+        }
+
+        // 8. If the pharmacy can fulfill the order, add it to the correct list for sorting.
+        if canFulfill {
+            var userDetails = db:getDocument("users", {"uid": phId});
+            if userDetails is error || userDetails is () {
+                continue;
+            }
+            json combinedPharmacyInfo = {
+                phId: phId,
+                name: check pharmacy.name,
+                contactNomber: check pharmacy.contactNomber,
+                email: check pharmacy.email,
+                city: check userDetails.city,
+                district: check userDetails.district,
+                profilepic: check userDetails.profilepic
+            };
+
+            json resultItem = {
+                pharmacyInfo: combinedPharmacyInfo,
+                totalPrice: totalPrice,
+                itemizedPrices: itemizedPrices
+            };
+
+            // --- MODIFIED: The new multi-level sorting logic ---
+            if (check userDetails.city == userCity) { // City match implies district match
+                cityMatchPharmacies.push(resultItem);
+            } else if (check userDetails.district == userDistrict) {
+                districtMatchPharmacies.push(resultItem);
+            } else {
+                otherPharmacies.push(resultItem);
+            }
+        }
+    }
+
+    // 9. --- NEW: Combine the three lists in the correct priority order. ---
+    json[] finalSortedResults = [];
+    finalSortedResults.push(...cityMatchPharmacies);
+    finalSortedResults.push(...districtMatchPharmacies);
+    finalSortedResults.push(...otherPharmacies);
+
+    // 10. Return the final sorted list.
+    return config:createresponse(true, "Prescription pricing calculated successfully.", finalSortedResults, http:STATUS_OK);
 }

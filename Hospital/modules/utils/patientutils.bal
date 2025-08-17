@@ -48,3 +48,7 @@ public type UpdatePrescriptionPharmacy record {
     string preId;
     string phId;
 };
+
+public type CalculatePricesRequest record {
+    string preId;
+};

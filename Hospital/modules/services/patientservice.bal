@@ -75,4 +75,8 @@ service /patient on config:serverListener {
         return routes:updateAppointmentStatusAndPayment(req, aid);
     }
 
+    resource function post calculatePrescriptionPrices(http:Request req, @http:Payload utils:CalculatePricesRequest body) returns http:Response|error {
+        return routes:calculatePrescriptionPrices(req, body);
+    }
+
 }
