@@ -95,6 +95,7 @@ public function getAllDoctors(http:Request req) returns http:Response|error {
             availableTimes: check item.availableTimes,
             description: check item.description,
             username: check user.username,
+            email:check user.email,
             profilepic: check user.profilepic
         };
 
