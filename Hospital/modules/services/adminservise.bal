@@ -5,9 +5,11 @@ import Hospital.utils;
 import Hospital.routes;
 
 
+
+
 @http:ServiceConfig {
     cors: {
-        allowOrigins: ["*"],
+        allowOrigins: [],
         allowCredentials: true,
         allowHeaders: ["Content-Type", "Authorization"],
         exposeHeaders: ["X-CUSTOM-HEADER"],
@@ -23,9 +25,9 @@ service /admin on config:serverListener {
     resource function post addDoctor(http:Request req,@http:Payload utils:DoctorBody doctor) returns http:Response|error {
         return routes:addDoctor(req,doctor);
     }
-    resource function post addPharmacy(http:Request req,@http:Payload utils:Pharmacy pharmacy) returns http:Response|error {
-        return routes:addPharmacy(req,pharmacy);
-    }
+resource function post addPharmacy(http:Request req, @http:Payload utils:PharmacyBody pharmacy) returns http:Response|error {
+    return routes:addPharmacy(req, pharmacy);
+}
     resource function get getAllPharmacies(http:Request req) returns http:Response|error {
         return routes:getAllPharmacies(req);
     }
@@ -35,6 +37,15 @@ service /admin on config:serverListener {
     resource function get getAllMedicines(http:Request req) returns http:Response|error {
         return routes:getAllMedicines(req);
     }
+
+    resource function get getAllDoctors(http:Request req) returns http:Response|error {
+        return routes:allGetDoctors(req);
+    }
+
+    resource function get getAllPatient(http:Request req) returns http:Response|error {
+        return routes:getAllPatient(req);
+    }
+   
 
     resource function delete deleteDoctor(http:Request req,@http:Payload utils:DeleteDoctor body) returns http:Response|error {
         return routes:deleteDoctor(req,body);
