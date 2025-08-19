@@ -28,5 +28,9 @@ public type DeleteDoctor record {
     string did;
 };
 
+public type DeletePharmacy record {
+    string phId;
+};
+
 
 
