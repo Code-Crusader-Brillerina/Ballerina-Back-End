@@ -167,7 +167,26 @@ public function doctorGetQueue(http:Request req, utils:DoctorGetQueue body) retu
     if documents is error {
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    return config:createresponse(true, "Details found successfully.", documents, http:STATUS_OK);
+    json[] arr = [];
+    foreach json item in documents {
+        var user = check db:getDocument("users", {"uid":check item.pid});
+        json userDate={
+            uid: check user.uid,
+            username: check user.username,
+            email: check user.email,
+            phoneNumber:check user.phoneNumber,
+            city: check user.city,
+            district: check user.district,
+            profilepic:check user.profilepic
+        };
+        json obj = {
+            user:userDate,
+            queData:item
+        };
+
+        arr.push(obj.toJson());
+    }
+    return config:createresponse(true, "Details found successfully.", arr, http:STATUS_OK);
 
 }
 
@@ -267,4 +286,127 @@ public function getAppoinment(http:Request req,utils:GetAppoinment body) returns
 
     return config:createresponse(true, "Prescription found succesfully.", appoinment, http:STATUS_OK);
 
+}
+
+public function getDoctorPrescription(http:Request req, utils:GetPrescription body) returns error|http:Response {
+    // get pid from token
+    var uid = config:autheriseAs(req, "doctor");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    // get prescription from db
+    var prescription = db:getDocument("prescriptions", {"preId": body.preId});
+    if prescription is error {
+        return config:createresponse(false, prescription.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if prescription is null {
+        return config:createresponse(false, "Prescription not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // get patient user data
+    var user = db:getDocument("users", {"uid": check prescription.pid});
+    if user is error {
+        return config:createresponse(false, user.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if user is null {
+        return config:createresponse(false, "Patient user not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // Get patient profile data (gender, DOB)
+    var patientProfile = db:getDocument("patients", {"pid": check prescription.pid});
+    if patientProfile is error {
+        return config:createresponse(false, patientProfile.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if patientProfile is null {
+        return config:createresponse(false, "Patient profile not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // get appointment from db
+    var appoinment = db:getDocument("appoinments", {"aid": check prescription.aid});
+    if appoinment is error {
+        return config:createresponse(false, appoinment.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if appoinment is null {
+        return config:createresponse(false, "Appointment not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // get pharmacy from db
+    var pharmacy = db:getDocument("pharmacies", {"phId": check prescription.phId});
+    if pharmacy is error {
+        return config:createresponse(false, pharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if pharmacy is null {
+        return config:createresponse(false, "Pharmacy not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // get the doctor user and profile data
+    var doctorUser = db:getDocument("users", {"uid": check prescription.did});
+    if doctorUser is error {
+        return config:createresponse(false, doctorUser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if doctorUser is null {
+        return config:createresponse(false, "Doctor not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // Get doctor profile data (specialization, licenseNomber, etc.)
+    var doctorProfile = db:getDocument("doctors", {"did": check prescription.did});
+    if doctorProfile is error {
+        return config:createresponse(false, doctorProfile.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if doctorProfile is null {
+        return config:createresponse(false, "Doctor profile not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // loop through items
+    json[] arr = [];
+    json[] items = <json[]>check prescription.items;
+    foreach json item in items {
+        var mediId = check item.mediId;
+        var medicine = check db:getDocument("medicines", {"mediId": mediId});
+        if medicine is null {
+            return config:createresponse(false, "Medicine not found.", {}, http:STATUS_NOT_FOUND);
+        }
+        json obj = {
+            mediId: mediId,
+            name: check medicine.name,
+            strength: check medicine.strength,
+            form: check medicine.form,
+            preItemId: check item.preItemId,
+            dosage: check item.dosage,
+            frequency: check item.frequency,
+            duration: check item.duration,
+            quantity: check item.quantity,
+            instructions: check item.instructions
+        };
+        arr.push(obj.toJson());
+    }
+
+    json result = {
+        preId: body.preId,
+        patient: {
+            name: check user.username,
+            phoneNumber: check user.phoneNumber,
+            email: check user.email,
+            city: check user.city,
+            district: check user.district,
+            gender: check patientProfile.gender, // Added patient gender
+            DOB: check patientProfile.DOB // Added patient DOB
+        },
+        doctor: {
+            name: check doctorUser.username,
+            profilepic: check doctorUser.profilepic,
+            specialization: check doctorProfile.specialization, // Added doctor specialization
+            licenseNomber: check doctorProfile.licenseNomber // Added doctor license number
+        },
+        appoinment: appoinment,
+        dateTime: check prescription.dateTime,
+        diliveryMethod: check prescription.diliveryMethod,
+        pharmacy: pharmacy,
+        status: check prescription.status,
+        note: check prescription.note,
+        items: arr
+    };
+
+    return config:createresponse(true, "Prescription found successfully.", result, http:STATUS_OK);
 }
