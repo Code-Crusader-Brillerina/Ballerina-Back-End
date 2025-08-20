@@ -24,6 +24,8 @@ public type Appoinment record {
     string description;
     string[] reports;
     string paymentState;
+    int number;
+    string url;
 };
 
 
