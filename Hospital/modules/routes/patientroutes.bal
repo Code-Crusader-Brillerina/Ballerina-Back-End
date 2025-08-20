@@ -393,10 +393,6 @@ public function getDoctorforPatient(http:Request req, utils:GetDoctor body) retu
 }
 
 public function getAllPharmacis(http:Request req) returns http:Response|error {
-    var uid = config:autheriseAs(req, "patient");
-    if uid is error {
-        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
-    }
 
     var pharmacyDocuments = db:getAllDocumentsFromCollection("pharmacies");
     if pharmacyDocuments is error {

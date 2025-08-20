@@ -28,6 +28,14 @@ service /user on config:serverListener {
     resource function post login(@http:Payload utils:UserLogin user) returns http:Response|error {
         return routes:login(user);
     }
+
+    resource function post logout() returns http:Response|error {
+        return routes:logout();
+    }
+    resource function get check\-auth(http:Request req) returns http:Response|error {
+        return routes:checkAuth(req);
+    }
+
     resource function post forgetPassword(@http:Payload utils:ForgetPassword forgetPBody) returns http:Response|error {
         return routes:forgetPassword(forgetPBody);
     }
@@ -41,4 +49,3 @@ service /user on config:serverListener {
 public function startServices()  {
     io:println("Start services.");
 }
-
