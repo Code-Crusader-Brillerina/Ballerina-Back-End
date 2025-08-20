@@ -6,6 +6,7 @@ import Hospital.functions;
 import Hospital.utils;
 
 import ballerina/http;
+import ballerina/uuid;
 
 public function updatePatient(http:Request req, utils:PatientUpdateBody body) returns http:Response|error {
     // get email
@@ -324,7 +325,9 @@ public function getAllAppoinments(http:Request req) returns error|http:Response 
             status: check item.status,
             description: check item.description,
             reports: check item.reports,
-            paymentState: check item.paymentState
+            paymentState: check item.paymentState,
+            number: check item.number,
+            url: check item.url
 
         };
 
@@ -619,6 +622,8 @@ public function getAppointmentDetailsById(http:Request req, string aid) returns 
         description: check appointment.description,
         reports: check appointment.reports,
         paymentState: check appointment.paymentState,
+        number: check appointment.number,
+            url: check appointment.url,
         doctor: {
             did: did,
             name: check doctorUser.username,
@@ -642,11 +647,38 @@ public function updateAppointmentStatusAndPayment(http:Request req, string aid) 
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
 
+// generae a quequ nomber
+    // get the quequ
+        // get the did,date,time
+            // get the apoinment and did,date,time
+            // get the queue
+    // mesure the length of queue
+    // generet the queue nomber(len+1)
+
+    var appointment = db:getDocument("appoinments", {"aid": aid});
+    if appointment is error || appointment is null {
+        return config:createresponse(false, "Updated appointment not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    var queue = db:getDocumentList("appoinments", {did:check appointment.did, date:check appointment.date,time:check appointment.time});
+    if queue is error {
+        return config:createresponse(false, queue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    int length = queue.length();
+    int number = length+1;
+
+    string uuid1String = uuid:createType1AsString();
+    string url ="https://meet.jit.si/"+uuid1String;
+
+// generete the url
+
     // 2. Define the changes to be made
     // The request body is empty, so we hardcode the updates here.
     map<json> updates = {
         "status": "scheduled",
-        "paymentState": "paid"
+        "paymentState": "paid",
+        "number":number,
+        "url":url
     };
 
     // 3. Update the document in the database
