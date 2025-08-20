@@ -65,8 +65,10 @@ public jwt:ValidatorConfig jwtValidatorConfig = {
 };
 
 
+// in config.bal
+
 public function autherise(http:Request req) returns json|error {
-    string|error token = getCookie(req,"JWT");
+    string|error token = getCookie(req, "JWT");
     if (token is error) {
         return token.message();
     }
@@ -74,10 +76,12 @@ public function autherise(http:Request req) returns json|error {
     jwt:Payload|error payload = check jwt:validate(token, jwtValidatorConfig);
     if (payload is jwt:Payload) {
         return {
-            role:payload["role"].toString(),
-            username:payload["username"].toString(),
-            email:payload["email"].toString(),
-            uid:payload["uid"].toString()
+            role: payload["role"].toString(),
+            username: payload["username"].toString(),
+            email: payload["email"].toString(),
+            uid: payload["uid"].toString(),
+            // Add this line
+            profilepic: payload["profilepic"].toString()
         };
     } else {
         return error("Unauthorized");

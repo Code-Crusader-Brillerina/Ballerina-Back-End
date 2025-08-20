@@ -63,7 +63,7 @@ public function logout() returns http:Response|error {
     // To log out, we overwrite the JWT cookie with one that has an expired maxAge.
     http:Cookie expiredCookie = new (
         "JWT",
-        "kkk", // Value can be empty
+        "expired", // Value can be empty
         path = "/",
         maxAge = 0, // This tells the browser to expire the cookie immediately
         httpOnly = true,
