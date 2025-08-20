@@ -59,3 +59,7 @@ public type UpdatePrescriptionStatusBody record {
     string preId;
     string phId; 
 };
+
+public type PaymentIntentRequest record {|
+    int amount;
+|};

@@ -4,9 +4,12 @@ import Hospital.config;
 import Hospital.db;
 import Hospital.functions;
 import Hospital.utils;
+import ballerina/log;
 
 import ballerina/http;
 import ballerina/uuid;
+
+configurable string stripeSecretKey = ?;
 
 public function updatePatient(http:Request req, utils:PatientUpdateBody body) returns http:Response|error {
     // get email
@@ -864,4 +867,41 @@ public function updatePrescriptionStatus(http:Request req, utils:UpdatePrescript
 
     // 5. Return a success response.
     return config:createresponse(true, "Prescription successfully confirmed and marked as paid.", {}, http:STATUS_OK);
+}
+
+public function createPaymentIntent(http:Request req, utils:PaymentIntentRequest payload) returns http:Response|error {
+    // The stripeSecretKey is now a module-level variable, no need to declare it here.
+    int amount = payload.amount;
+
+    http:Client stripeApiClient = check new ("https://api.stripe.com");
+
+    // Use the configurable variable directly
+    http:Response|error paymentIntentResponse = stripeApiClient->post("/v1/payment_intents",
+        string`amount=${amount}&currency=lkr`,
+        {"Authorization": "Bearer " + stripeSecretKey, "Content-Type": "application/x-www-form-urlencoded"}
+    );
+
+    if paymentIntentResponse is http:Response {
+        if paymentIntentResponse.statusCode == http:STATUS_OK {
+            json|error responseBody = paymentIntentResponse.getJsonPayload();
+            if responseBody is json {
+                string|error clientSecret = responseBody.client_secret.ensureType(string);
+                if clientSecret is string {
+                    json clientSecretPayload = {"clientSecret": clientSecret};
+                    return config:createresponse(true, "PaymentIntent created", clientSecretPayload, http:STATUS_OK);
+                }
+            }
+        }
+    }
+    
+    if paymentIntentResponse is error {
+        log:printError("Failed to create PaymentIntent from Stripe", 'error = paymentIntentResponse);
+    } else {
+        log:printError("Stripe returned a non-OK response", 
+            statusCode = paymentIntentResponse.statusCode, 
+            responseBody = check paymentIntentResponse.getTextPayload()
+        );
+    }
+
+    return config:createresponse(false, "Failed to create PaymentIntent", {}, http:STATUS_INTERNAL_SERVER_ERROR);
 }

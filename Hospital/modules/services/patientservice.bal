@@ -83,4 +83,8 @@ service /patient on config:serverListener {
         return routes:updatePrescriptionStatus(req, body);
     }
 
+    resource function post createPaymentIntent(http:Request req, @http:Payload utils:PaymentIntentRequest payload) returns http:Response|error {
+        return routes:createPaymentIntent(req, payload);
+    }
+
 }
