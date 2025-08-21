@@ -14,7 +14,9 @@ public function hashPassword(string password) returns string {
     return hashed.toBase16();
 }
 
-public function crateJWT(utils:User user) returns string|error{
+// in functions.bal
+
+public function crateJWT(utils:User user) returns string|error {
     jwt:IssuerConfig config = {
         username: user.email,
         issuer: config:jwtIssuerConfig.issuer,
@@ -25,11 +27,13 @@ public function crateJWT(utils:User user) returns string|error{
             "role": user.role,
             "username": user.username,
             "email": user.email,
-            "uid":user.uid
+            "uid": user.uid,
+            // Add this line
+            "profilepic": user.profilepic 
         }
     };
     string token = check jwt:issue(config);
-    return  token;
+    return token;
 }
 
 public function updateJWT(string uid,string role,utils:UserUpdate userData) returns string|error{
