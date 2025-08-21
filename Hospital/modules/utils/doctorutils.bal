@@ -53,6 +53,7 @@ public type Prescription record {
 
 public type DoctorGetQueue record {
     string date;
+    string time;
 };
 
 public type GetAppoinment record {

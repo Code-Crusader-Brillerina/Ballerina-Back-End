@@ -172,3 +172,17 @@ public  function deleteDoctor(http:Request req,utils:DeleteDoctor body) returns 
     }
     return config:createresponse(true, "Medicine details found successfully.", doctor.toJson(), http:STATUS_OK);
 }
+
+public  function deletePharmacy(http:Request req,utils:DeletePharmacy body) returns http:Response|error {
+    // get body
+    // delete row
+    var uid = config:autheriseAs(req,"admin");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    var pharmacies =  db:deleteDocument("pharmacies",{phId:body.phId});
+    if pharmacies is error{
+        return config:createresponse(false, pharmacies.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    return config:createresponse(true, "Medicine details found successfully.", pharmacies.toJson(), http:STATUS_OK);
+}

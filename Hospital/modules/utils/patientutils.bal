@@ -24,6 +24,8 @@ public type Appoinment record {
     string description;
     string[] reports;
     string paymentState;
+    int number;
+    string url;
 };
 
 
@@ -57,3 +59,7 @@ public type UpdatePrescriptionStatusBody record {
     string preId;
     string phId; 
 };
+
+public type PaymentIntentRequest record {|
+    int amount;
+|};
