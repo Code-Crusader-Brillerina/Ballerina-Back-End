@@ -134,11 +134,16 @@ public function getQueue(utils:GetQueue body) returns http:Response|error {
     // get did
     // get date
     // find all the feilds in apoinment
-    var documents = db:getDocumentList("appoinments", {did: body.did, date: body.date});
+    var documents = db:getDocumentList("appoinments", {did: body.did, date: body.date,time: body.time});
     if documents is error {
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    return config:createresponse(true, "Doctors details found successfully.", documents, http:STATUS_OK);
+    var queue =
+    from var e in documents
+    let int num = check e.number
+    order by num ascending
+    select e;
+    return config:createresponse(true, "Details found successfully.", queue, http:STATUS_OK);
 
 }
 
@@ -668,7 +673,6 @@ public function updateAppointmentStatusAndPayment(http:Request req, string aid) 
         return config:createresponse(false, queue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     int length = queue.length();
-    int number = length+1;
 
     string uuid1String = uuid:createType1AsString();
     string url ="https://meet.jit.si/"+uuid1String;
@@ -680,7 +684,7 @@ public function updateAppointmentStatusAndPayment(http:Request req, string aid) 
     map<json> updates = {
         "status": "scheduled",
         "paymentState": "paid",
-        "number":number,
+        "number":length,
         "url":url
     };
 

@@ -32,6 +32,7 @@ public type Appoinment record {
 public type GetQueue record {
     string did;
     string date;
+    string time;
 };
 
 public type UpdateAppoinmentPayment record {
