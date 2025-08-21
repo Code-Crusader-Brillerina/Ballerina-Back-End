@@ -163,30 +163,11 @@ public function doctorGetQueue(http:Request req, utils:DoctorGetQueue body) retu
     // get did
     // get date
     // find all the feilds in apoinment
-    var documents = db:getDocumentList("appoinments", {did: uid, date: body.date});
+    var documents = db:getDocumentList("appoinments", {did: uid, date: body.date,time:body.time});
     if documents is error {
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    json[] arr = [];
-    foreach json item in documents {
-        var user = check db:getDocument("users", {"uid":check item.pid});
-        json userDate={
-            uid: check user.uid,
-            username: check user.username,
-            email: check user.email,
-            phoneNumber:check user.phoneNumber,
-            city: check user.city,
-            district: check user.district,
-            profilepic:check user.profilepic
-        };
-        json obj = {
-            user:userDate,
-            queData:item
-        };
-
-        arr.push(obj.toJson());
-    }
-    return config:createresponse(true, "Details found successfully.", arr, http:STATUS_OK);
+    return config:createresponse(true, "Details found successfully.", documents, http:STATUS_OK);
 
 }
 
@@ -263,7 +244,9 @@ public function doctorGetAllAppoinments(http:Request req) returns error|http:Res
             status: statusResult is json ? statusResult : "",
             description: descriptionResult is json ? descriptionResult : "",
             reports: reportsResult is json ? reportsResult : [],
-            paymentState: paymentStateResult is json ? paymentStateResult : ""
+            paymentState: paymentStateResult is json ? paymentStateResult : "",
+            number: check item.number,
+            url: check item.url
         };
         
         // Push the json object directly without .toJson()
