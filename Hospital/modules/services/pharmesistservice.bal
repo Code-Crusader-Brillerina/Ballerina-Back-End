@@ -19,6 +19,7 @@ service /pharmacy on config:serverListener {
         return "Hellow phamesist from Ballerina...";
     }
 
+
     resource function post addInventory(http:Request req, @http:Payload utils:AddInventoryBody body) returns http:Response|error {
         return routes:addInventory(req, body);
     }
