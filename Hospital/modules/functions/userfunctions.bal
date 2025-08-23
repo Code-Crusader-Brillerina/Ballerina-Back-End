@@ -54,19 +54,32 @@ public function updateJWT(string uid,string role,utils:UserUpdate userData) retu
 }
 
 
+// public function sendEmail(string reciver,string subject,string message) returns error? {
+//     email:SmtpClient smtpClient = check new ("smtp.gmail.com", "r.k.fashionkurunegala@gmail.com" , "ifou lnky aiot hoim");
+//     email:Message email = {
+//         to: reciver,
+//         subject: subject,
+//         body: message
+//     };
+//     var issent= smtpClient->sendMessage(email);
+//     if issent is error {
+//         return error("Error from sending the email.");
+//     } 
+// }
+
 public function sendEmail(string reciver,string subject,string message) returns error? {
     email:SmtpClient smtpClient = check new ("smtp.gmail.com", "r.k.fashionkurunegala@gmail.com" , "ifou lnky aiot hoim");
     email:Message email = {
         to: reciver,
         subject: subject,
-        body: message
+        htmlBody: message,
+        contentType: "text/html"
     };
     var issent= smtpClient->sendMessage(email);
     if issent is error {
         return error("Error from sending the email.");
     } 
 }
-
 
 public function generateOtpCode() returns string {
     int code = checkpanic random:createIntInRange(100000, 999999);

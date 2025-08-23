@@ -26,7 +26,7 @@ public function genereteAnswer(string question,json requiredData) returns json|e
     };
 
     http:Request req = new;
-    req.setHeader("Authorization", "Bearer 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");
+    req.setHeader("Authorization", "Bearer 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");
     req.setHeader("Content-Type", "application/json");
     req.setPayload(payload);
 
