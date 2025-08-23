@@ -4,8 +4,8 @@ import Hospital.config;
 import Hospital.db;
 import Hospital.functions;
 import Hospital.utils;
-import ballerina/log;
 
+import ballerina/log;
 import ballerina/http;
 import ballerina/uuid;
 
@@ -78,7 +78,7 @@ public function updatePatient(http:Request req, utils:PatientUpdateBody body) re
     return config:createresponse(true, "Patient update successful.", body.toJson(), http:STATUS_OK, cookie);
 }
 
-public function getAllDoctors(http:Request req) returns http:Response|error {
+public function getAllDoctors() returns http:Response|error {
     // get whole Doctor collection
     var documents = db:getAllDocumentsFromCollection("doctors");
     if documents is error {
@@ -655,13 +655,13 @@ public function updateAppointmentStatusAndPayment(http:Request req, string aid) 
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
 
-// generae a quequ nomber
-    // get the quequ
-        // get the did,date,time
-            // get the apoinment and did,date,time
-            // get the queue
-    // mesure the length of queue
-    // generet the queue nomber(len+1)
+    // generae a quequ nomber
+        // get the quequ
+            // get the did,date,time
+                // get the apoinment and did,date,time
+                // get the queue
+        // mesure the length of queue
+        // generet the queue nomber(len+1)
 
     var appointment = db:getDocument("appoinments", {"aid": aid});
     if appointment is error || appointment is null {
@@ -677,7 +677,7 @@ public function updateAppointmentStatusAndPayment(http:Request req, string aid) 
     string uuid1String = uuid:createType1AsString();
     string url ="https://meet.jit.si/"+uuid1String;
 
-// generete the url
+    // generete the url
 
     // 2. Define the changes to be made
     // The request body is empty, so we hardcode the updates here.
@@ -908,4 +908,23 @@ public function createPaymentIntent(http:Request req, utils:PaymentIntentRequest
     }
 
     return config:createresponse(false, "Failed to create PaymentIntent", {}, http:STATUS_INTERNAL_SERVER_ERROR);
+}
+
+public function chat(utils:ChatBody body) returns http:Response|error {
+    // get data
+    json requiredData={};
+    match body.requiredData {
+        "getAllDetailsOfDoctors" => {
+            requiredData=check functions:doctorDetailsForChat();
+        }
+        "getAllDetailsOfPharmacies" => {
+            requiredData= check functions:pharmacyDetailsForChat();
+        }
+    }
+    var answer =functions:genereteAnswer(body.question,requiredData);
+    if answer is error {
+        return config:createresponse(false, answer.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    return config:createresponse(true, "Answer genereted successful.", answer, http:STATUS_OK);
+
 }

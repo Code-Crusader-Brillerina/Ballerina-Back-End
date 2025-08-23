@@ -64,3 +64,8 @@ public type UpdatePrescriptionStatusBody record {
 public type PaymentIntentRequest record {|
     int amount;
 |};
+
+public type ChatBody record {
+    string requiredData;
+    string question; 
+};

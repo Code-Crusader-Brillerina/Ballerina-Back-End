@@ -23,8 +23,8 @@ service /patient on config:serverListener {
         return routes:updatePatient(req, body);
     }
 
-    resource function get getAllDoctors(http:Request req) returns http:Response|error {
-        return routes:getAllDoctors(req);
+    resource function get getAllDoctors() returns http:Response|error {
+        return routes:getAllDoctors();
     }
 
     resource function post createAppointment(http:Request req, @http:Payload utils:Appoinment body) returns http:Response|error {
@@ -85,6 +85,10 @@ service /patient on config:serverListener {
 
     resource function post createPaymentIntent(http:Request req, @http:Payload utils:PaymentIntentRequest payload) returns http:Response|error {
         return routes:createPaymentIntent(req, payload);
+    }
+
+    resource function post chat(@http:Payload utils:ChatBody body) returns http:Response|error {
+        return routes:chat(body);
     }
 
 }
