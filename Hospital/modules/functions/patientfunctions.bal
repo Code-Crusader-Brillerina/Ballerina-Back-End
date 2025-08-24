@@ -3,6 +3,8 @@ import ballerina/http;
 
 import Hospital.db;
 
+configurable string Token = ?;
+
 public function genereteAnswer(string question,json requiredData) returns json|error{
     http:Client openAIClient = check new ("https://openrouter.ai/api/v1");
     json payload = {
@@ -26,7 +28,7 @@ public function genereteAnswer(string question,json requiredData) returns json|e
     };
 
     http:Request req = new;
-    req.setHeader("Authorization", "Bearer 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");
+    req.setHeader("Authorization", Token);
     req.setHeader("Content-Type", "application/json");
     req.setPayload(payload);
 
