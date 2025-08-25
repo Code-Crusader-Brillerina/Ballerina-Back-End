@@ -32,6 +32,7 @@ public type Appoinment record {
 public type GetQueue record {
     string did;
     string date;
+    string time;
 };
 
 public type UpdateAppoinmentPayment record {
@@ -63,3 +64,8 @@ public type UpdatePrescriptionStatusBody record {
 public type PaymentIntentRequest record {|
     int amount;
 |};
+
+public type ChatBody record {
+    string requiredData;
+    string question; 
+};

@@ -90,7 +90,8 @@ public function forgetPassword(utils:ForgetPassword forgetPBody) returns http:Re
         return config:createresponse(false, "User cannot fined.", {}, http:STATUS_NOT_FOUND);
     }
     string OTP = functions:generateOtpCode();
-    var issent=functions:sendEmail(forgetPBody.email,"OTP form Halgouce",OTP);
+    json getEmail=config:sendOTPEmail(OTP);
+    var issent=functions:sendEmail(forgetPBody.email,check getEmail.subject,check getEmail.message);
     if issent is error{
         return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }

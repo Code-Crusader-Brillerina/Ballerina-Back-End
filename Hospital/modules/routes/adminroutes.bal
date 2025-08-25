@@ -1,7 +1,6 @@
 import ballerina/http;
 import ballerina/uuid;
 // import ballerina/io;
-// import ballerina/io;
 
 import Hospital.db;
 import Hospital.utils;
@@ -29,6 +28,11 @@ public function addDoctor(http:Request req,utils:DoctorBody doctor) returns http
     var newrecforDoctor = db:insertOneIntoCollection("doctors", doctor.doctorData);
     if newrecforDoctor is error {
         return config:createresponse(false, newrecforDoctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    json getEmail=config:addDoctorEmail(doctor.userData.username,doctor.userData.email,"111");
+    var issent=functions:sendEmail(doctor.userData.email,check getEmail.subject,check getEmail.message);
+    if issent is error{
+        return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
     return config:createresponse(true, "Doctor registered successfully.", doctor.toJson(), http:STATUS_CREATED);
@@ -76,6 +80,12 @@ public function addPharmacy(http:Request req, utils:PharmacyBody pharmacy) retur
     var newPharmacy = db:insertOneIntoCollection("pharmacies", pharmacy.pharmacyData);
     if newPharmacy is error {
         return config:createresponse(false, newPharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    json getEmail=config:addDoctorEmail(pharmacy.userData.username,pharmacy.userData.email,"111");
+    var issent=functions:sendEmail(pharmacy.userData.email,check getEmail.subject,check getEmail.message);
+    if issent is error{
+        return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
     // Return a success response
