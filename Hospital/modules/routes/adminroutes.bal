@@ -91,8 +91,33 @@ public function getAllPharmacies(http:Request req) returns http:Response|error{
     if documents is error{
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    // mach and return json object
-    return config:createresponse(true, "Pharmacy details found successfully.", documents, http:STATUS_OK);
+    
+    json[] enrichedPharmacies = [];
+    
+    foreach json PharmacyJson in <json[]>documents {
+        // Convert json to map<json> for easier manipulation
+        map<json> Pharmacy = <map<json>>PharmacyJson;
+        map<json> enrichedPharmacy = Pharmacy.clone();
+        
+        // Get the phId from pharmacy data
+        json|error pidResult = Pharmacy["phId"];
+        if pidResult is json {
+            // Find the corresponding user where uid matches phId
+            var userResult = db:getDocument("users", {"uid": pidResult});
+            if userResult is json {
+                // Add user data to the pharmacy record
+                enrichedPharmacy["userData"] = userResult;
+            } else {
+                // If no user found, add null or empty object
+                enrichedPharmacy["userData"] = ();
+            }
+        } else {
+            enrichedPharmacy["userData"] = ();
+        }
+        
+        enrichedPharmacies.push(enrichedPharmacy);
+    }
+    return config:createresponse(true, "Pharmacy details found successfully.", enrichedPharmacies, http:STATUS_OK);
 }
 
 
