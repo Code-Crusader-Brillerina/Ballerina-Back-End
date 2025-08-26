@@ -54,4 +54,8 @@ resource function post addPharmacy(http:Request req, @http:Payload utils:Pharmac
     resource function delete deletePharmacy(http:Request req,@http:Payload utils:DeletePharmacy body) returns http:Response|error {
         return routes:deletePharmacy(req,body);
     }
+
+    resource function get getAllAppoinments(http:Request req) returns http:Response|error {
+        return routes:adminGetAllAppoinments(req);
+    }
 }
