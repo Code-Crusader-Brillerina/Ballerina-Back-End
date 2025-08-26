@@ -1,5 +1,4 @@
 import ballerina/http;
-import ballerina/uuid;
 // import ballerina/io;
 
 import Hospital.db;
@@ -39,7 +38,7 @@ public function addDoctor(http:Request req,utils:DoctorBody doctor) returns http
 }
 
 
-public function addPharmacy(http:Request req, utils:PharmacyBody pharmacy) returns http:Response|error {
+public function addPharmacy(http:Request req, utils:AddPharmacyBody pharmacy) returns http:Response|error {
     // Authorize as admin
     var uid = config:autheriseAs(req, "admin");
     if uid is error {
@@ -47,7 +46,7 @@ public function addPharmacy(http:Request req, utils:PharmacyBody pharmacy) retur
     }
     
     // Check if the user email already exists
-    var exist = db:isEmailExist(pharmacy.userData.email);
+    var exist = db:isEmailExist(pharmacy.user.email);
     if exist is error {
         return config:createresponse(false, exist.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
@@ -55,36 +54,25 @@ public function addPharmacy(http:Request req, utils:PharmacyBody pharmacy) retur
         return config:createresponse(false, "User email already exists.", {}, http:STATUS_CONFLICT);
     }
 
-    // --- Start of Changes ---
-
-    // 1. Generate a new unique ID
-    string newSharedId = uuid:createType1AsString();
-
-    // 2. Assign the SAME ID to both records using their respective field names
-    pharmacy.pharmacyData.phId = newSharedId; // Use phId for PharmacyData
-    pharmacy.userData.uid = newSharedId;      // Use uid for UserData
-
-    // --- End of Changes ---
-
-    // Hash the password and set the role
-    pharmacy.userData.password = functions:hashPassword(pharmacy.userData.password);
-    pharmacy.userData.role = "pharmacy";
-
-    // Insert user data into the 'users' collection
-    var newUser = db:insertOneIntoCollection("users", pharmacy.userData);
-    if newUser is error {
-        return config:createresponse(false, newUser.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    // Hash the password
+    pharmacy.user.password = functions:hashPassword(pharmacy.user.password);
+    
+    // Insert user data
+    var newrec = db:insertOneIntoCollection("users", pharmacy.user);
+    if newrec is error {
+        return config:createresponse(false, newrec.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-
-    // Insert pharmacy-specific data into the 'pharmacies' collection
-    var newPharmacy = db:insertOneIntoCollection("pharmacies", pharmacy.pharmacyData);
-    if newPharmacy is error {
-        return config:createresponse(false, newPharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    
+    // Insert pharmacy data
+    var newrecforPharmacy = db:insertOneIntoCollection("pharmacies", pharmacy.pharmacy);
+    if newrecforPharmacy is error {
+        return config:createresponse(false, newrecforPharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-
-    json getEmail=config:addDoctorEmail(pharmacy.userData.username,pharmacy.userData.email,"111");
-    var issent=functions:sendEmail(pharmacy.userData.email,check getEmail.subject,check getEmail.message);
-    if issent is error{
+    
+    // Send email notification
+    json getEmail = config:addDoctorEmail(pharmacy.user.username, pharmacy.user.email, "111");
+    var issent = functions:sendEmail(pharmacy.user.email, check getEmail.subject, check getEmail.message);
+    if issent is error {
         return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
