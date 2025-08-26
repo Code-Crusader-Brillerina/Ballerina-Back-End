@@ -150,18 +150,46 @@ public function allGetDoctors(http:Request req) returns http:Response|error{
     return config:createresponse(true, "Doctor details found successfully.", documents, http:STATUS_OK);
 }
 
-public function getAllPatient(http:Request req) returns http:Response|error{
-    var uid = config:autheriseAs(req,"admin");
+public function getAllPatient(http:Request req) returns http:Response|error {
+    var uid = config:autheriseAs(req, "admin");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
-    // get whole Doctor collection
-    var documents =  db:getAllDocumentsFromCollection("patients");
-    if documents is error{
+    
+    // Get whole Patient collection
+    var documents = db:getAllDocumentsFromCollection("patients");
+    if documents is error {
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    // mach and return json object
-    return config:createresponse(true, "Patient details found successfully.", documents, http:STATUS_OK);
+
+    // Enrich each patient with their corresponding user data
+    json[] enrichedPatients = [];
+    
+    foreach json patientJson in <json[]>documents {
+        // Convert json to map<json> for easier manipulation
+        map<json> patient = <map<json>>patientJson;
+        map<json> enrichedPatient = patient.clone();
+        
+        // Get the pid from patient data
+        json|error pidResult = patient["pid"];
+        if pidResult is json {
+            // Find the corresponding user where uid matches pid
+            var userResult = db:getDocument("users", {"uid": pidResult});
+            if userResult is json {
+                // Add user data to the patient record
+                enrichedPatient["userData"] = userResult;
+            } else {
+                // If no user found, add null or empty object
+                enrichedPatient["userData"] = ();
+            }
+        } else {
+            enrichedPatient["userData"] = ();
+        }
+        
+        enrichedPatients.push(enrichedPatient);
+    }
+    
+    return config:createresponse(true, "Patient details with user data found successfully.", enrichedPatients, http:STATUS_OK);
 }
 
 
