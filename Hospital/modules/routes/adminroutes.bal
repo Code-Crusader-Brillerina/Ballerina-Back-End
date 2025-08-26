@@ -124,18 +124,70 @@ public function getAllMedicines(http:Request req) returns http:Response|error{
     return config:createresponse(true, "Medicine details found successfully.", documents, http:STATUS_OK);
 }
 
-public function allGetDoctors(http:Request req) returns http:Response|error{
-    var uid = config:autheriseAs(req,"admin");
+public function allGetDoctors(http:Request req) returns http:Response|error {
+    var uid = config:autheriseAs(req, "admin");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
+
     // get whole Doctor collection
-    var documents =  db:getAllDocumentsFromCollection("doctors");
-    if documents is error{
-        return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    var doctorDocuments = db:getAllDocumentsFromCollection("doctors");
+    if doctorDocuments is error {
+        return config:createresponse(false, doctorDocuments.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    // mach and return json object
-    return config:createresponse(true, "Doctor details found successfully.", documents, http:STATUS_OK);
+
+    // Get user details for each doctor
+    json[] doctorsWithUserData = [];
+
+    // Loop through each doctor and get their user details
+    foreach var doctor in doctorDocuments {
+        json|error doctorIdResult = doctor.did;
+        if doctorIdResult is json {
+            string doctorId = doctorIdResult.toString();
+
+            // Get user data for this doctor (uid should match did)
+            var userData = db:getDocument("users", {"uid": doctorId});
+            if userData is json {
+                // Extract user data fields safely
+                json|error usernameResult = userData.username;
+                json|error emailResult = userData.email;
+                json|error phoneNumberResult = userData.phoneNumber;
+                json|error cityResult = userData.city;
+                json|error districtResult = userData.district;
+                json|error profilepicResult = userData.profilepic;
+
+                // Convert to map<json> for field assignment
+                map<json> combinedData = <map<json>>doctor.clone();
+                
+                // Add user data fields (will override if they already exist)
+                if usernameResult is json {
+                    combinedData["username"] = usernameResult;
+                }
+                if emailResult is json {
+                    combinedData["email"] = emailResult;
+                }
+                if phoneNumberResult is json {
+                    combinedData["phoneNumber"] = phoneNumberResult;
+                }
+                if cityResult is json {
+                    combinedData["city"] = cityResult;
+                }
+                if districtResult is json {
+                    combinedData["district"] = districtResult;
+                }
+                if profilepicResult is json {
+                    combinedData["profilepic"] = profilepicResult;
+                }
+                doctorsWithUserData.push(combinedData);
+            } else {
+                // If user data not found, just add doctor data
+                doctorsWithUserData.push(doctor);
+            }
+        }
+    }
+
+    // return the doctors with their user details
+    return config:createresponse(true, "Doctor details found successfully.", doctorsWithUserData, http:STATUS_OK);
 }
 
 public function getAllPatient(http:Request req) returns http:Response|error {
