@@ -25,9 +25,9 @@ service /admin on config:serverListener {
     resource function post addDoctor(http:Request req,@http:Payload utils:DoctorBody doctor) returns http:Response|error {
         return routes:addDoctor(req,doctor);
     }
-resource function post addPharmacy(http:Request req, @http:Payload utils:PharmacyBody pharmacy) returns http:Response|error {
-    return routes:addPharmacy(req, pharmacy);
-}
+    resource function post addPharmacy(http:Request req, @http:Payload utils:PharmacyBody pharmacy) returns http:Response|error {
+        return routes:addPharmacy(req, pharmacy);
+    }
     resource function get getAllPharmacies(http:Request req) returns http:Response|error {
         return routes:getAllPharmacies(req);
     }

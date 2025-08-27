@@ -4,6 +4,7 @@ import Hospital.config;
 import Hospital.db;
 import Hospital.functions;
 import Hospital.utils;
+import ballerina/websocket;
 import ballerina/http;
 
 public function register(utils:RegisterBody body) returns http:Response|error {
@@ -138,4 +139,18 @@ public function changePassword(http:Request req,utils:changePassword body) retur
         return config:createresponse(false, newvalue.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     return config:createresponse(true, "Password changed successfully.", body.toJson(), http:STATUS_OK);
+}
+
+public function getUser(http:Request req) returns http:Response|error {
+    var user = config:autherise(req);
+    if user is error {
+        return config:createresponse(false, user.message(), {}, http:STATUS_NOT_FOUND);
+    }
+    return config:createresponse(true, "User Found successfully.", user, http:STATUS_OK);
+}
+
+public function dumby() returns http:Response|error {
+    websocket:Client wsClient = check new("ws://localhost:9090/chat");
+    check wsClient->writeMessage("Text message");
+    return config:createresponse(true, "Password changed successfully.", {cool:"good"}, http:STATUS_OK);
 }

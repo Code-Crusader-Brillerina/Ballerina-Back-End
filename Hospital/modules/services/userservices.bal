@@ -45,6 +45,14 @@ service /user on config:serverListener {
     resource function post changePassword(http:Request req,@http:Payload utils:changePassword body) returns http:Response|error {
         return routes:changePassword(req,body);
     }
+
+    resource function get getUser(http:Request req) returns http:Response|error {
+        return routes:getUser(req);
+    }
+
+    resource function get dumby() returns http:Response|error {
+        return routes:dumby();
+    }
 }
 public function startServices()  {
     io:println("Start services.");
