@@ -155,20 +155,63 @@ public function getDoctor(http:Request req) returns error|http:Response {
 
 }
 
+# Description.
+#
+# + req - parameter description  
+# + body - parameter description
+# + return - return value description
 public function doctorGetQueue(http:Request req, utils:DoctorGetQueue body) returns http:Response|error {
     var uid = config:autheriseAs(req, "doctor");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
-    // get did
-    // get date
-    // find all the feilds in apoinment
-    var documents = db:getDocumentList("appoinments", {did: uid, date: body.date,time:body.time});
+    
+    // Get appointments for the doctor on specified date and time
+    var documents = db:getDocumentList("appoinments", {did: uid, date: body.date, time: body.time});
     if documents is error {
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    return config:createresponse(true, "Details found successfully.", documents, http:STATUS_OK);
-
+    
+    // Get patient and user data for each appointment
+    json[] appointmentsWithPatients = [];
+    
+    foreach var appointment in documents {
+        // Get patient data
+        var patient = db:getDocument("patients", {"pid": check appointment.pid});
+        if patient is error {
+            return config:createresponse(false, patient.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+        }
+        if patient is null {
+            return config:createresponse(false, "Patient not found.", {}, http:STATUS_NOT_FOUND);
+        }
+        
+        // Get user data for the patient using pid
+        var userResult = db:getDocument("users", {"uid": check patient.pid});
+        json? user = ();
+        
+        if userResult is json {
+            user = userResult;
+        }
+        // Note: If user not found, we continue without failing the request
+        
+        // Combine appointment and patient data, include user data if found
+        json appointmentWithPatientAndUser = {
+            "appointment": appointment,
+            "patient": patient
+        };
+        
+        // Add user data only if found
+        if user is json {
+            appointmentWithPatientAndUser = {
+                "appointment": appointment,
+                "patient": patient,
+                "user": user
+            };
+        }
+        appointmentsWithPatients.push(appointmentWithPatientAndUser);
+    }
+    
+    return config:createresponse(true, "Queue details found successfully.", appointmentsWithPatients, http:STATUS_OK);
 }
 
 public function doctorGetAllAppoinments(http:Request req) returns error|http:Response {
@@ -255,20 +298,56 @@ public function doctorGetAllAppoinments(http:Request req) returns error|http:Res
     
     return config:createresponse(true, "Appointments found successfully.", arr, http:STATUS_OK);
 }
-public function getAppoinment(http:Request req,utils:GetAppoinment body) returns error|http:Response{
-    // get pid from token
-    var uid = config:autheriseAs(req,"doctor");
+public function getAppoinment(http:Request req, utils:GetAppoinment body) returns error|http:Response {
+    // get uid from token
+    var uid = config:autheriseAs(req, "doctor");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
-    // get prescription fron db
-    var appoinment=  db:getDocument("appoinments",{"aid":body.aid});
-    if appoinment is error{
+    
+    // get appointment from db
+    var appoinment = db:getDocument("appoinments", {"aid": body.aid});
+    if appoinment is error {
         return config:createresponse(false, appoinment.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
+    if appoinment is null {
+        return config:createresponse(false, "Appointment not found.", {}, http:STATUS_NOT_FOUND);
+    }
 
-    return config:createresponse(true, "Prescription found succesfully.", appoinment, http:STATUS_OK);
+    // Get patient data
+    var patient = db:getDocument("patients", {"pid": check appoinment.pid});
+    if patient is error {
+        return config:createresponse(false, patient.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if patient is null {
+        return config:createresponse(false, "Patient not found.", {}, http:STATUS_NOT_FOUND);
+    }
+    
+    // Get user data for the patient using pid
+    var userResult = db:getDocument("users", {"uid": check appoinment.pid});
+    json? user = ();
+    
+    if userResult is json {
+        user = userResult;
+    }
+    // Note: If user not found, we continue without failing the request
+    
+    // Combine appointment and patient data, include user data if found
+    json appointmentWithPatientAndUser = {
+        "appointment": appoinment,
+        "patient": patient
+    };
+    
+    // Add user data only if found
+    if user is json {
+        appointmentWithPatientAndUser = {
+            "appointment": appoinment,
+            "patient": patient,
+            "user": user
+        };
+    }
 
+    return config:createresponse(true, "Appointment found successfully.", appointmentWithPatientAndUser, http:STATUS_OK);
 }
 
 public function getDoctorPrescription(http:Request req, utils:GetPrescription body) returns error|http:Response {
