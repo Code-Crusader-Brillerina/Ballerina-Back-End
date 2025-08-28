@@ -15,7 +15,6 @@ public type InventoryData record {
 };
 
 public type AddInventoryBody record {
-    string pharmacyId;
     string medicineId;
     InventoryData inventoryData;
 };
