@@ -244,3 +244,76 @@ public function updatePrescriptionOrderStatus(http:Request req, utils:UpdatePres
 
     return config:createresponse(true, "Prescription status updated successfully.", {}, http:STATUS_OK);
 }
+
+
+// NEW FUNCTION: Provides aggregated counts for the dashboard summary.
+public function getDashboardStats(http:Request req) returns http:Response|error {
+    var uid = config:autheriseAs(req, "pharmacy");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    string pharmacyId = uid.toString();
+
+    // Fetch all prescriptions for this pharmacy
+    var prescriptions = db:getDocumentList("prescriptions", {"phId": pharmacyId});
+    if prescriptions is error {
+        return config:createresponse(false, prescriptions.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // Calculate counts by status
+    int processingCount = 0;
+    int shippedCount = 0;
+    int deliveredCount = 0;
+
+    foreach json p in prescriptions {
+        // FIX: Wrap each statement in a block with curly braces {}
+        match p?.status {
+            "Order Confirmed"|"Order Packed" => {
+                processingCount += 1;
+            }
+            "Shipped" => {
+                shippedCount += 1;
+            }
+            "Delivered" => {
+                deliveredCount += 1;
+            }
+        }
+    }
+    
+    json stats = {
+        processing: processingCount,
+        sending: shippedCount, // Mapping "Shipped" to "sending" for the frontend
+        received: deliveredCount // Mapping "Delivered" to "received"
+    };
+
+    return config:createresponse(true, "Dashboard stats fetched", stats, http:STATUS_OK);
+}
+
+// NEW FUNCTION: Gets a list of all doctors for the pharmacy to see.
+public function getDoctorsForPharmacy(http:Request req) returns http:Response|error {
+    var uid = config:autheriseAs(req, "pharmacy");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    
+    var doctorDocs = db:getAllDocumentsFromCollection("doctors");
+    if doctorDocs is error {
+        return config:createresponse(false, doctorDocs.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    json[] doctorList = [];
+    foreach json doctor in doctorDocs {
+        if doctor is map<json> {
+            var userDetails = db:getDocument("users", {"uid": doctor?.did});
+            if userDetails is map<json> {
+                json combined = {
+                    id: check userDetails.uid,
+                    name: check userDetails.username,
+                    specialization: check doctor.specialization
+                };
+                doctorList.push(combined);
+            }
+        }
+    }
+    return config:createresponse(true, "Doctors list fetched", doctorList, http:STATUS_OK);
+}
