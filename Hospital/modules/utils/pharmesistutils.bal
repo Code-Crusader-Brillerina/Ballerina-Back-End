@@ -18,3 +18,10 @@ public type AddInventoryBody record {
     string medicineId;
     InventoryData inventoryData;
 };
+
+
+public type UpdatePrescriptionOrderStatusRequestBody record {
+    string preId;
+    // This makes the field required.
+    string newStatus; 
+};

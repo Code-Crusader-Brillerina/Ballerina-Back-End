@@ -36,4 +36,12 @@ service /pharmacy on config:serverListener {
     resource function get medicines(http:Request req) returns http:Response|error {
         return routes:getAllMedicinesForPharmacy(req);
     }
+
+    resource function get prescriptions(http:Request req) returns http:Response|error {
+        return routes:getPrescriptionsForPharmacy(req);
+    }
+
+    resource function put prescriptions/status(http:Request req, @http:Payload utils:UpdatePrescriptionOrderStatusRequestBody body) returns http:Response|error {
+        return routes:updatePrescriptionOrderStatus(req, body);
+    }
 }

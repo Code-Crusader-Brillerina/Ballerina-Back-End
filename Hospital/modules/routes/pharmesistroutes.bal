@@ -1,6 +1,7 @@
 import Hospital.config;
 import Hospital.db;
 import Hospital.utils;
+import Hospital.functions;
 
 import ballerina/http;
 
@@ -140,4 +141,106 @@ public function getAllMedicinesForPharmacy(http:Request req) returns http:Respon
     }
 
     return config:createresponse(true, "Master medicine list fetched successfully.", simplifiedMedicines, http:STATUS_OK);
+}
+
+
+
+public function getPrescriptionsForPharmacy(http:Request req) returns http:Response|error {
+    // 1. Authorize the request and get the pharmacy's ID (uid) from the JWT token.
+    var uid = config:autheriseAs(req, "pharmacy");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    string pharmacyId = uid.toString();
+
+    // 2. Fetch all prescriptions where 'phId' matches the logged-in pharmacy's ID.
+    var prescriptionDocs = db:getDocumentList("prescriptions", {"phId": pharmacyId});
+    if prescriptionDocs is error {
+        return config:createresponse(false, prescriptionDocs.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    json[] enrichedPrescriptions = [];
+
+    // 3. Loop through each prescription to fetch and attach patient details.
+    foreach json prescription in prescriptionDocs {
+        if prescription !is map<json> {
+            continue; // Skip malformed prescription data
+        }
+
+        var patientIdResult = prescription?.pid;
+        if patientIdResult !is string {
+            continue; // Skip if patient ID is missing
+        }
+        string patientId = patientIdResult;
+
+        // Fetch the patient's user data (for name, contact, location)
+        var userDetails = db:getDocument("users", {"uid": patientId});
+        // Fetch the patient's profile data (for DOB and gender)
+        var patientDetails = db:getDocument("patients", {"pid": patientId});
+
+        int age = -1; // Default age if DOB is not found or invalid
+        if patientDetails is map<json> {
+            var dobResult = patientDetails?.DOB;
+            if dobResult is string {
+                var calculatedAge = functions:calculateAge(dobResult);
+                if calculatedAge is int {
+                    age = calculatedAge;
+                }
+            }
+        }
+        
+        // 4. Construct the patient information object.
+        json patientInfo = {
+            username: userDetails is map<json> ? (userDetails?.username ?: "") : "",
+            age: age,
+            city: userDetails is map<json> ? (userDetails?.city ?: "") : "",
+            district: userDetails is map<json> ? (userDetails?.district ?: "") : "",
+            phoneNumber: userDetails is map<json> ? (userDetails?.phoneNumber ?: "") : "",
+            // ADDED: Get DOB and gender directly from the patientDetails document
+            DOB: patientDetails is map<json> ? (patientDetails?.DOB ?: "N/A") : "N/A",
+            gender: patientDetails is map<json> ? (patientDetails?.gender ?: "N/A") : "N/A"
+        };
+
+        // 5. Combine the original prescription with the new patient info.
+        map<json> enrichedPrescription = prescription.clone();
+        enrichedPrescription["patientInfo"] = patientInfo;
+        
+        enrichedPrescriptions.push(enrichedPrescription);
+    }
+
+    // 6. Return the final, combined list.
+    return config:createresponse(true, "Prescriptions fetched successfully.", enrichedPrescriptions, http:STATUS_OK);
+}
+
+
+
+public function updatePrescriptionOrderStatus(http:Request req, utils:UpdatePrescriptionOrderStatusRequestBody body) returns http:Response|error {
+    // 1. Authorize the user as a pharmacy and get their ID.
+    var uid = config:autheriseAs(req, "pharmacy");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    string pharmacyId = uid.toString();
+
+    // 2. Security Check: Verify that the pharmacy owns this prescription.
+    var prescription = db:getDocument("prescriptions", {"preId": body.preId});
+    if prescription is error {
+        return config:createresponse(false, "Database error finding prescription.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    if prescription is () {
+        return config:createresponse(false, "Prescription not found.", {}, http:STATUS_NOT_FOUND);
+    }
+    // Ensure the 'phId' in the document matches the logged-in pharmacy's ID.
+    if prescription?.phId != pharmacyId {
+        return config:createresponse(false, "Unauthorized to update this prescription.", {}, http:STATUS_FORBIDDEN);
+    }
+
+    // 3. Prepare and execute the update operation.
+    map<json> updates = {"status": body.newStatus};
+    var result = db:updateDocument("prescriptions", {"preId": body.preId}, updates);
+    if result is error {
+        return config:createresponse(false, result.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    return config:createresponse(true, "Prescription status updated successfully.", {}, http:STATUS_OK);
 }
