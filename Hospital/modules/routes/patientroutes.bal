@@ -399,7 +399,6 @@ public function getDoctorforPatient(http:Request req, utils:GetDoctor body) retu
     return config:createresponse(true, "Doctor found succesfully.", result, http:STATUS_OK);
 
 }
-
 public function getAllPharmacis(http:Request req) returns http:Response|error {
 
     var pharmacyDocuments = db:getAllDocumentsFromCollection("pharmacies");
@@ -410,57 +409,51 @@ public function getAllPharmacis(http:Request req) returns http:Response|error {
     json[] combinedPharmacies = [];
     foreach json pharmacyDoc in pharmacyDocuments {
 
-        // --- Start of Fix ---
-        // Safely access the 'phId' field. Using `.` on a json type returns `json|error`.
-        var phIdResult = pharmacyDoc.phId;
-
-        // 1. Handle the case where accessing 'phId' returns an error (e.g., field is missing).
-        if phIdResult is error {
-            // Log this issue or simply skip the malformed document.
-            continue;
+        // Safely get the pharmacy ID (phId)
+        var phId = pharmacyDoc?.phId;
+        if phId !is string {
+            log:printWarn("Skipping pharmacy document due to missing or invalid 'phId'", document = pharmacyDoc);
+            continue; // Skip to the next pharmacy document
         }
 
-        // 2. Ensure the retrieved phId is a string before using it.
-        if phIdResult !is string {
-            // The phId has an unexpected type. Skip this document.
-            continue;
+        // Get the corresponding user document
+        var userDoc = db:getDocument("users", {"uid": phId});
+        if userDoc is error || userDoc is () {
+            log:printWarn("Skipping pharmacy because a matching user document was not found", phId = phId);
+            continue; // Skip if no user found or if there's a DB error
         }
 
-        // Now, phIdResult is guaranteed to be a string.
-        string phId = phIdResult;
+        // --- SAFER FIELD ACCESS ---
+        // Instead of using 'check' directly, safely extract each value.
+        // The `?` is optional chaining, and `?: ""` provides a default value if the field is null.
+        string|error name = pharmacyDoc?.name.ensureType(string);
+        string|error contact = pharmacyDoc?.contactNomber.ensureType(string);
+        string|error username = userDoc?.username.ensureType(string);
+        string|error email = userDoc?.email.ensureType(string);
+        string|error phone = userDoc?.phoneNumber.ensureType(string);
+        string|error city = userDoc?.city.ensureType(string);
+        string|error district = userDoc?.district.ensureType(string);
+        json profilepic = check userDoc?.profilepic ?: ""; // Provide a default for optional fields
 
-        // 3. Find the user document using the guaranteed string ID.
-        var userDocResult = db:getDocument("users", {"uid": phId});
-
-        // 4. Handle potential errors from the database call.
-        if userDocResult is error {
-            // Could not fetch the document from the DB. Log and skip.
-            continue;
+        // Check if any of the essential fields failed to be extracted
+        if name is error || contact is error || username is error || email is error || phone is error || city is error || district is error {
+             log:printWarn("Skipping pharmacy due to malformed data", phId = phId);
+             continue;
         }
 
-        // 5. Handle the case where no matching user document is found.
-        if userDocResult is () {
-            // This is a valid scenario (e.g., orphaned pharmacy record). Skip.
-            continue;
-        }
-
-        // At this point, userDocResult is guaranteed to be a valid json document.
-        json userDoc = userDocResult;
-        // --- End of Fix ---
-
-        // Combine pharmacy-specific and user-specific data
+        // Now that all data is validated, create the combined object
         json combinedDoc = {
-            phId: check pharmacyDoc.phId, // Safe to use 'check' now as we know it exists
-            name: check pharmacyDoc.name,
-            contactNomber: check pharmacyDoc.contactNomber,
+            phId: phId,
+            name: name,
+            contactNomber: contact,
             userDetails: {
-                uid: check userDoc.uid,
-                username: check userDoc.username,
-                email: check userDoc.email,
-                phoneNumber: check userDoc.phoneNumber,
-                city: check userDoc.city,
-                district: check userDoc.district,
-                profilepic: check userDoc.profilepic
+                uid: phId, // We already have this
+                username: username,
+                email: email,
+                phoneNumber: phone,
+                city: city,
+                district: district,
+                profilepic: profilepic
             }
         };
         combinedPharmacies.push(combinedDoc);
