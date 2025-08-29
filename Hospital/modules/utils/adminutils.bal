@@ -30,7 +30,6 @@ public type Medicine record {
     string medicineType;
     string size;
     string description;
-    decimal price;
 };
 
 public type DeleteDoctor record {
