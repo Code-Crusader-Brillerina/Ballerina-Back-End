@@ -134,7 +134,7 @@ public function getQueue(utils:GetQueue body) returns http:Response|error {
     // get did
     // get date
     // find all the feilds in apoinment
-    var documents = db:getDocumentList("appoinments", {did: body.did, date: body.date,time: body.time});
+    var documents = db:getDocumentList("appoinments", {did: body.did, date: body.date,time: body.time,paymentState:"paid"});
     if documents is error {
         return config:createresponse(false, documents.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }

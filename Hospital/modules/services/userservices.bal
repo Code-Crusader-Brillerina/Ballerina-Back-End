@@ -7,7 +7,7 @@ import ballerina/io;
 
 @http:ServiceConfig {
     cors: {
-        allowOrigins: [], // leave empty
+        allowOrigins: ["http://localhost:5173"],
         allowCredentials: true,
         allowHeaders: ["Content-Type", "Authorization"],
         exposeHeaders: ["X-CUSTOM-HEADER"],
