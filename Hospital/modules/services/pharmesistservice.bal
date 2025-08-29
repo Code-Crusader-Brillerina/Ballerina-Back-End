@@ -45,13 +45,17 @@ service /pharmacy on config:serverListener {
         return routes:updatePrescriptionOrderStatus(req, body);
     }
 
-        // NEW ENDPOINT for dashboard summary cards and chart
+    // NEW ENDPOINT for dashboard summary cards and chart
     resource function get dashboard/stats(http:Request req) returns http:Response|error {
         return routes:getDashboardStats(req);
     }
 
-    // NEW ENDPOINT for the doctor list on the dashboard
-    resource function get doctors(http:Request req) returns http:Response|error {
-        return routes:getDoctorsForPharmacy(req);
+    resource function get financials/delivered(http:Request req) returns http:Response|error {
+        return routes:getDeliveredPrescriptionFinancials(req);
     }
+
+    resource function get financials/pending(http:Request req) returns http:Response|error {
+        return routes:getPendingPrescriptionFinancials(req);
+    }
+
 }

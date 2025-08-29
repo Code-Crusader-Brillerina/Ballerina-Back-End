@@ -289,31 +289,122 @@ public function getDashboardStats(http:Request req) returns http:Response|error 
     return config:createresponse(true, "Dashboard stats fetched", stats, http:STATUS_OK);
 }
 
-// NEW FUNCTION: Gets a list of all doctors for the pharmacy to see.
-public function getDoctorsForPharmacy(http:Request req) returns http:Response|error {
-    var uid = config:autheriseAs(req, "pharmacy");
-    if uid is error {
-        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+// A private helper function to calculate the total price of a single prescription.
+// A private helper function to calculate the total price of a single prescription.
+function calculatePrescriptionTotal(json prescription, string pharmacyId) returns decimal|error {
+    if prescription !is map<json> || !prescription.hasKey("items") {
+        return 0.0; 
     }
-    
-    var doctorDocs = db:getAllDocumentsFromCollection("doctors");
-    if doctorDocs is error {
-        return config:createresponse(false, doctorDocs.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    var items = prescription.items;
+    if items !is json[] {
+        return 0.0;
     }
+    decimal total = 0.0;
+    foreach json item in items {
+        if item is map<json> {
+            var mediIdResult = (check item.mediId).cloneWithType(string);
+            var quantityResult = (check item.quantity).cloneWithType(string);
 
-    json[] doctorList = [];
-    foreach json doctor in doctorDocs {
-        if doctor is map<json> {
-            var userDetails = db:getDocument("users", {"uid": doctor?.did});
-            if userDetails is map<json> {
-                json combined = {
-                    id: check userDetails.uid,
-                    name: check userDetails.username,
-                    specialization: check doctor.specialization
-                };
-                doctorList.push(combined);
+            if mediIdResult is string && quantityResult is string {
+                string mediId = mediIdResult;
+                string quantityStr = quantityResult;
+                string inventoryId = pharmacyId + "_" + mediId;
+                var inventoryItem = db:getDocument("pharmacyInventory", {"inventoryId": inventoryId});
+                if inventoryItem is map<json> {
+                    var priceResult = (check inventoryItem.price).cloneWithType(string);
+                    if priceResult is string {
+                        var price = 'decimal:fromString(priceResult);
+                        var quantity = 'decimal:fromString(quantityStr);
+                        if price is decimal && quantity is decimal {
+                            total += price * quantity;
+                        }
+                    }
+                }
             }
         }
     }
-    return config:createresponse(true, "Doctors list fetched", doctorList, http:STATUS_OK);
+    return total;
+}
+
+
+// Endpoint for DELIVERED prescription financials.
+public function getDeliveredPrescriptionFinancials(http:Request req) returns http:Response|error {
+    var uid = config:autheriseAs(req, "pharmacy");
+    if uid is error { return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED); }
+    string pharmacyId = uid.toString();
+
+    var allPrescriptions = db:getDocumentList("prescriptions", {"phId": pharmacyId, "status": "Delivered"});
+    if allPrescriptions is error { return config:createresponse(false, allPrescriptions.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR); }
+
+    decimal grandTotal = 0.0;
+    utils:DetailedPrice[] detailedPrices = [];
+
+    foreach json p in allPrescriptions {
+        if p is map<json> {
+            var preIdResult = (check p.preId).cloneWithType(string);
+            // ADDED: Get the dateTime field
+            var dateTimeResult = (check p.dateTime).cloneWithType(string);
+
+            // Check if both fields were retrieved successfully
+            if preIdResult is string && dateTimeResult is string {
+                var total = calculatePrescriptionTotal(p, pharmacyId);
+                if total is decimal {
+                    grandTotal += total;
+                    // ADDED: Include dateTime in the response object
+                    detailedPrices.push({preId: preIdResult, totalPrice: total, dateTime: dateTimeResult});
+                }
+            }
+        }
+    }
+
+    utils:PrescriptionFinancials financials = { grandTotal: grandTotal, detailedPrices: detailedPrices };
+    return config:createresponse(true, "Delivered prescription financials fetched.", financials.toJson(), http:STATUS_OK);
+}
+
+// Endpoint for PENDING prescription financials.
+public function getPendingPrescriptionFinancials(http:Request req) returns http:Response|error {
+    var uid = config:autheriseAs(req, "pharmacy");
+    if uid is error { return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED); }
+    string pharmacyId = uid.toString();
+
+    var allPrescriptions = db:getDocumentList("prescriptions", {"phId": pharmacyId});
+    if allPrescriptions is error { return config:createresponse(false, allPrescriptions.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR); }
+
+    string[] pendingStatuses = ["Order Confirmed", "Order Packed", "Shipped"];
+    json[] pendingPrescriptions = [];
+
+    foreach json p in allPrescriptions {
+        if p is map<json> {
+            var statusResult = (check p.status).cloneWithType(string);
+            if statusResult is string {
+                if pendingStatuses.some(s => s == statusResult) {
+                    pendingPrescriptions.push(p);
+                }
+            }
+        }
+    }
+
+    decimal grandTotal = 0.0;
+    utils:DetailedPrice[] detailedPrices = [];
+
+    foreach json p in pendingPrescriptions {
+        if p is map<json> {
+            var preIdResult = (check p.preId).cloneWithType(string);
+            // ADDED: Get the dateTime field
+            var dateTimeResult = (check p.dateTime).cloneWithType(string);
+
+            // Check if both fields were retrieved successfully
+            if preIdResult is string && dateTimeResult is string {
+                var total = calculatePrescriptionTotal(p, pharmacyId);
+                if total is decimal {
+                    grandTotal += total;
+                    // ADDED: Include dateTime in the response object
+                    detailedPrices.push({preId: preIdResult, totalPrice: total, dateTime: dateTimeResult});
+                }
+            }
+        }
+    }
+
+    utils:PrescriptionFinancials financials = { grandTotal: grandTotal, detailedPrices: detailedPrices };
+    return config:createresponse(true, "Pending prescription financials fetched.", financials.toJson(), http:STATUS_OK);
 }
