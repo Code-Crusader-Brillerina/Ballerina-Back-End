@@ -169,3 +169,31 @@ public function paymentEmail(string username, string email, string amount, strin
     };
 }
 
+
+public function sendConfirmationEmail(string otp) returns json {
+    string subject = "Confirm Your Email for Halgoes Hospital";
+
+    string message = string `
+        <html>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2 style="color: #2E86C1;">Welcome to Halgoes Hospital!</h2>
+            <p>Dear User,</p>
+            <p>Thank you for registering. Please use the following One-Time Password (OTP) to confirm your email address and activate your account:</p>
+            
+            <div style="font-size: 22px; font-weight: bold; color: #D35400; margin: 20px 0;">
+              ${otp}
+            </div>
+
+            <p>This OTP is valid for <b>10 minutes</b>. If you did not create an account, please disregard this email.</p>
+            
+            <p>Best Regards,<br>
+            <b>The Halgoes Hospital Team</b></p>
+          </body>
+        </html>`;
+
+    return {
+        "subject": subject,
+        "message": message
+    };
+}
+

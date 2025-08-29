@@ -46,7 +46,9 @@ public function updateJWT(string uid,string role,utils:UserUpdate userData) retu
         phoneNumber:"",
         city:"",
         district:"",
-        profilepic:""
+        profilepic:"",
+        emailConfirmed:0,
+        OTP:""
 
     };
     var token=crateJWT(newuser);

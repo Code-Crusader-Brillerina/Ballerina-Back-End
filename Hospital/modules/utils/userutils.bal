@@ -13,6 +13,8 @@ public type User record {
     string city;
     string district;
     string profilepic;
+    int? emailConfirmed;
+    string? OTP;
 
 };
 
@@ -60,4 +62,8 @@ public type changePassword record {
     string password;
 };
 
+
+public type EmailValidateBody record {
+    string OTP;
+};
     
