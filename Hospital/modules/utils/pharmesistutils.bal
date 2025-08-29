@@ -25,3 +25,14 @@ public type UpdatePrescriptionOrderStatusRequestBody record {
     // This makes the field required.
     string newStatus; 
 };
+
+public type DetailedPrice record {
+    string preId;
+    decimal totalPrice;
+    string dateTime;
+};
+
+public type PrescriptionFinancials record {
+    decimal grandTotal;
+    DetailedPrice[] detailedPrices;
+};

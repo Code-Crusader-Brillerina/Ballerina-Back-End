@@ -1,13 +1,13 @@
 import ballerina/http;
-// import ballerina/io;
+import ballerina/io;
 
 import Hospital.db;
 import Hospital.utils;
 import Hospital.config;
 import Hospital.functions;
 
-public function addDoctor(http:Request req,utils:DoctorBody doctor) returns http:Response|error {
-    var uid = config:autheriseAs(req,"admin");
+public function addDoctor(http:Request req, utils:DoctorBody doctor) returns http:Response|error {
+    var uid = config:autheriseAs(req, "admin");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
@@ -20,18 +20,28 @@ public function addDoctor(http:Request req,utils:DoctorBody doctor) returns http
     }
 
     doctor.userData.password = functions:hashPassword(doctor.userData.password);
+
+    // --- ADD THESE TWO LINES ---
+    // Automatically confirm the email for admin-created doctors
+    doctor.userData.emailConfirmed = 1; 
+    // Set OTP to nil (null) as it's not needed
+    doctor.userData.OTP = (); 
+    // --- END OF CHANGES ---
+
     var newrec = db:insertOneIntoCollection("users", doctor.userData);
     if newrec is error {
         return config:createresponse(false, newrec.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     var newrecforDoctor = db:insertOneIntoCollection("doctors", doctor.doctorData);
     if newrecforDoctor is error {
+        // Rollback user creation if doctor creation fails
+        _ = check db:deleteDocument("users", {"uid": doctor.userData.uid});
         return config:createresponse(false, newrecforDoctor.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    json getEmail=config:addDoctorEmail(doctor.userData.username,doctor.userData.email,"111");
-    var issent=functions:sendEmail(doctor.userData.email,check getEmail.subject,check getEmail.message);
-    if issent is error{
-        return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    json getEmail = config:addDoctorEmail(doctor.userData.username, doctor.userData.email, "a temporary password");
+    var issent = functions:sendEmail(doctor.userData.email, check getEmail.subject, check getEmail.message);
+    if issent is error {
+        io:println("Email sending failed for new doctor: ", issent.message());
     }
 
     return config:createresponse(true, "Doctor registered successfully.", doctor.toJson(), http:STATUS_CREATED);
@@ -57,6 +67,13 @@ public function addPharmacy(http:Request req, utils:AddPharmacyBody pharmacy) re
     // Hash the password
     pharmacy.user.password = functions:hashPassword(pharmacy.user.password);
     
+    // --- ADD THESE TWO LINES ---
+    // Automatically confirm the email for admin-created pharmacies
+    pharmacy.user.emailConfirmed = 1;
+    // Set OTP to nil (null) as it's not needed
+    pharmacy.user.OTP = ();
+    // --- END OF CHANGES ---
+
     // Insert user data
     var newrec = db:insertOneIntoCollection("users", pharmacy.user);
     if newrec is error {
@@ -66,14 +83,16 @@ public function addPharmacy(http:Request req, utils:AddPharmacyBody pharmacy) re
     // Insert pharmacy data
     var newrecforPharmacy = db:insertOneIntoCollection("pharmacies", pharmacy.pharmacy);
     if newrecforPharmacy is error {
+        // ADDED: Rollback user creation if pharmacy creation fails
+        _ = check db:deleteDocument("users", {"uid": pharmacy.user.uid});
         return config:createresponse(false, newrecforPharmacy.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
     
     // Send email notification
-    json getEmail = config:addDoctorEmail(pharmacy.user.username, pharmacy.user.email, "111");
+    json getEmail = config:addDoctorEmail(pharmacy.user.username, pharmacy.user.email, "a temporary password");
     var issent = functions:sendEmail(pharmacy.user.email, check getEmail.subject, check getEmail.message);
     if issent is error {
-        return config:createresponse(false, issent.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+        io:println("Email sending failed for new pharmacy: ", issent.message());
     }
 
     // Return a success response
