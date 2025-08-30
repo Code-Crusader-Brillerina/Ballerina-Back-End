@@ -4,7 +4,6 @@ import Hospital.functions;
 import Hospital.utils;
 
 import ballerina/http;
-// import ballerina/io;
 
 public function updateDoctor(http:Request req, utils:DoctorUpdateBody body) returns http:Response|error {
     // get email
@@ -471,4 +470,132 @@ public function getDoctorPrescription(http:Request req, utils:GetPrescription bo
     };
 
     return config:createresponse(true, "Prescription found successfully.", result, http:STATUS_OK);
+}
+
+
+// Paste this into your doctorroutes.bal file
+
+public function getCompletedAppointmentRevenue(http:Request req) returns http:Response|error {
+    // 1. Authorize as a doctor
+    var uid = config:autheriseAs(req, "doctor");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    string doctorId = uid.toString();
+
+    // 2. Get the doctor's consultation fee
+    var doctorDetails = db:getDocument("doctors", {"did": doctorId});
+    if doctorDetails is error || doctorDetails is () {
+        return config:createresponse(false, "Doctor details not found.", {}, http:STATUS_NOT_FOUND);
+    }
+    
+    // --- START OF THE FIX ---
+    // First, get the fee as a string because that's how it's stored in the DB.
+    string feeString = check doctorDetails.consultationFee;
+    
+    // Then, parse the string to a decimal. This returns `decimal|error`.
+    decimal|error consultationFeeResult = decimal:fromString(feeString);
+    
+    // Check if the conversion was successful. If not, the string was not a valid number.
+    if consultationFeeResult is error {
+        return config:createresponse(false, "Invalid consultation fee format for doctor.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    // Now you have the correct decimal value.
+    decimal consultationFee = consultationFeeResult;
+    // --- END OF THE FIX ---
+
+
+    // 3. Get all COMPLETED appointments for this doctor
+    var completedAppointments = db:getDocumentList("appoinments", {"did": doctorId, "status": "completed"});
+    if completedAppointments is error {
+        return config:createresponse(false, completedAppointments.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // 4. Calculate totals using the correct fee
+    decimal grandTotal = completedAppointments.length() * consultationFee;
+    utils:AppointmentRevenueDetail[] detailedRevenue = [];
+
+    foreach json app in completedAppointments {
+        if app is map<json> {
+            var aidResult = (check app.aid).cloneWithType(string);
+            var dateResult = (check app.date).cloneWithType(string);
+
+            if aidResult is string && dateResult is string {
+                detailedRevenue.push({
+                    aid: aidResult,
+                    date: dateResult,
+                    price: consultationFee // This will now have the correct value
+                });
+            }
+        }
+    }
+
+    utils:DoctorFinancials financials = {
+        grandTotal: grandTotal,
+        detailedRevenue: detailedRevenue
+    };
+
+    return config:createresponse(true, "Completed revenue fetched successfully.", financials.toJson(), http:STATUS_OK);
+}
+
+public function getPendingAppointmentRevenue(http:Request req) returns http:Response|error {
+    // 1. Authorize as a doctor
+    var uid = config:autheriseAs(req, "doctor");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+    string doctorId = uid.toString();
+
+    // 2. Get the doctor's consultation fee
+    var doctorDetails = db:getDocument("doctors", {"did": doctorId});
+    if doctorDetails is error || doctorDetails is () {
+        return config:createresponse(false, "Doctor details not found.", {}, http:STATUS_NOT_FOUND);
+    }
+
+    // --- START OF THE FIX ---
+    // First, get the fee as a string because that's how it's stored in the DB.
+    string feeString = check doctorDetails.consultationFee;
+    
+    // Then, parse the string to a decimal. This returns `decimal|error`.
+    decimal|error consultationFeeResult = decimal:fromString(feeString);
+    
+    // Check if the conversion was successful. If not, the string was not a valid number.
+    if consultationFeeResult is error {
+        return config:createresponse(false, "Invalid consultation fee format for doctor.", {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+    // Now you have the correct decimal value.
+    decimal consultationFee = consultationFeeResult;
+    // --- END OF THE FIX ---
+
+    // 3. Get all SCHEDULED (pending) appointments for this doctor
+    var pendingAppointments = db:getDocumentList("appoinments", {"did": doctorId, "status": "scheduled"});
+    if pendingAppointments is error {
+        return config:createresponse(false, pendingAppointments.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // 4. Calculate totals using the correct fee
+    decimal grandTotal = pendingAppointments.length() * consultationFee;
+    utils:AppointmentRevenueDetail[] detailedRevenue = [];
+
+    foreach json app in pendingAppointments {
+        if app is map<json> {
+            var aidResult = (check app.aid).cloneWithType(string);
+            var dateResult = (check app.date).cloneWithType(string);
+
+            if aidResult is string && dateResult is string {
+                detailedRevenue.push({
+                    aid: aidResult,
+                    date: dateResult,
+                    price: consultationFee // This will now have the correct value
+                });
+            }
+        }
+    }
+
+    utils:DoctorFinancials financials = {
+        grandTotal: grandTotal,
+        detailedRevenue: detailedRevenue
+    };
+
+    return config:createresponse(true, "Pending revenue fetched successfully.", financials.toJson(), http:STATUS_OK);
 }

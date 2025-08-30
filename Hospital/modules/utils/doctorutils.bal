@@ -60,4 +60,14 @@ public type GetAppoinment record {
     string aid;
 };
 
- 
+
+public type AppointmentRevenueDetail record {
+    string aid;
+    string date;
+    decimal price;
+};
+
+public type DoctorFinancials record {
+    decimal grandTotal;
+    AppointmentRevenueDetail[] detailedRevenue;
+};
