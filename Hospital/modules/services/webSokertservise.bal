@@ -54,7 +54,7 @@
 
 import ballerina/websocket;
 
-service /chat on new websocket:Listener(9090, {
+service /ws on new websocket:Listener(9090, {
     host: "0.0.0.0"   
 }) {
 
@@ -67,6 +67,7 @@ public type OpenSokert record {
     string message;
     string uid;
     string[] uidList;
+    string completedAid;
 };
 
 public type SockertClients record {
@@ -103,7 +104,7 @@ service class ChatService {
                     foreach string user in chatMessage.uidList {
                         if patient.uid===user {
                             if temp.isOpen() {
-                                check temp->writeMessage("chatMessage");
+                                check temp->writeMessage(chatMessage.completedAid);
                             }
                         }
                     } 
