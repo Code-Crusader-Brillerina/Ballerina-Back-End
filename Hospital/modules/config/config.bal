@@ -3,6 +3,9 @@ import ballerina/io;
 import ballerinax/mongodb;
 import ballerina/jwt;
 
+configurable string MONGOURI = ?;
+configurable string DATABASE_NAME = ?;
+configurable string SALT = ?;
 
 public listener http:Listener serverListener = new (8080, host = "0.0.0.0");
 //public mongodb:Client mongoClient = checkpanic new (connection = "mongodb://localhost:27017");

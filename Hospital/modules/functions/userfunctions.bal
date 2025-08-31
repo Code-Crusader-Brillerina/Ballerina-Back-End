@@ -7,6 +7,10 @@ import ballerina/random;
 import Hospital.config;
 import Hospital.utils;
 
+configurable string EMAIL = ?;
+configurable string APP_PWD_OF_EMAIL = ?;
+
+
 
 public function hashPassword(string password) returns string {
     string salted = password + config:salt;
@@ -70,7 +74,7 @@ public function updateJWT(string uid,string role,utils:UserUpdate userData) retu
 // }
 
 public function sendEmail(string reciver,string subject,string message) returns error? {
-    email:SmtpClient smtpClient = check new ("smtp.gmail.com", "r.k.fashionkurunegala@gmail.com" , "ifou lnky aiot hoim");
+    email:SmtpClient smtpClient = check new ("smtp.gmail.com", EMAIL , APP_PWD_OF_EMAIL);
     email:Message email = {
         to: reciver,
         subject: subject,
