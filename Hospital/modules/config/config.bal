@@ -3,12 +3,15 @@ import ballerina/io;
 import ballerinax/mongodb;
 import ballerina/jwt;
 
+configurable string MONGOURI = ?;
+configurable string DATABASE_NAME = ?;
+configurable string SALT = ?;
 
 public listener http:Listener serverListener = new (8080, host = "0.0.0.0");
-public mongodb:Client mongoClient = checkpanic new (connection = "mongodb://localhost:27017");
+public mongodb:Client mongoClient = checkpanic new (connection = MONGOURI);
 // public mongodb:Client mongoClient = checkpanic new (connection = "mongodb+srv://eshansenadhi5:iqsPgDJ23DIROKQr@ballerina.uxzidam.mongodb.net/?retryWrites=true&w=majority&appName=Ballerina");
-public string DATABASE="Hospital";
-public string salt="We can won this price.";
+public string DATABASE=DATABASE_NAME;
+public string salt=SALT;
 
 public function createresponse(boolean success, string message, json data, int statusCode, http:Cookie? cookie = ()) returns http:Response {
     http:Response res = new;
