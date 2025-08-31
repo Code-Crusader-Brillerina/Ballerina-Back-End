@@ -14,10 +14,10 @@ A modular backend platform designed to streamline healthcare consultations by ma
 - [Features](#features)
 - [Architecture](#architecture)
 - [Modular Design](#modular-design)
-- [Quick Start](#quick-start)
 - [API Documentation](#api-documentation)
 - [Modules](#modules)
 - [Configuration](#configuration)
+- [Quick Start](#quick-start)
 - [Development](#development)
 - [Project Structure](#project-structure)
 - [Team](#team)
@@ -99,41 +99,6 @@ graph TB
 ---
 
 
-## 🚀 Quick Start
-
-### Prerequisites
-- **Ballerina** 2201.8.x or later
-- **MongoDB** 6.0 or later
-
-### 1. Clone Repository
-```bash
-git clone https://github.com/Code-Crusader-Brillerina/Ballerina-Back-End.git
-cd Hospital
-```
-
-### 2. Database Setup
-Create mongoDB connection string
-
-
-### 3. Configuration
-Create `Config.toml` file:
-```toml
-[Hospital.routes]
-stripeSecretKey="Your StripeKey"
-
-[Hospital.functions]
-Token="Bearer <your api key>"
-```
-
-### 4. Run the Application
-```bash
-bal run
-```
-
-The services will be available at:
-- **Main Services:** `http://localhost:9090`
----
-
 ## 📚 API Documentation
 
 ### 🌐 **Service Endpoints**
@@ -171,12 +136,18 @@ All protected endpoints require a **JWT token** stored in the **JWT cookie**.
 
 ### 🗄️ **System Configuration**
 ```toml
-[resourcehub]
-USER = "username"           # Database username
-PASSWORD = "password"       # Database password  
-HOST = "localhost"          # Database host
-PORT = 3306                 # Database port
-DATABASE = "resourcehub"    # Database name
+[Hospital.routes]
+stripeSecretKey="Your stripe key"
+
+[Hospital.functions]
+Token="Bearer <your LLM token"
+EMAIL="your email"
+APP_PWD_OF_EMAIL="your email app key"
+
+[Hospital.config]
+MONGOURI="mongodb://localhost:27017"
+DATABASE_NAME="Hospital"
+SALT="your salt for pasword hashing"
 ```
 
 ### 🔐 **SSL Certificates**
@@ -184,6 +155,75 @@ Place SSL certificates in `resources/JWT/`:
 - `Public.crt` - Public certificate
 - `Private.key` - Private key
 
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Ballerina** 2201.8.x or later
+- **MongoDB** 6.0 or later
+
+### 1. Clone Repository
+```bash
+https://github.com/iwb25-125-code-crusaders/Ballerina-Back-End.git
+cd Hospital
+```
+
+### 2. Database Setup
+Create mongoDB connection string
+
+
+### 3. Configuration
+Create `Config.toml` file:
+```toml
+[Hospital.routes]
+stripeSecretKey="Your stripe key"
+
+[Hospital.functions]
+Token="Bearer <your LLM token"
+EMAIL="your email"
+APP_PWD_OF_EMAIL="your email app key"
+
+[Hospital.config]
+MONGOURI="mongodb://localhost:27017"
+DATABASE_NAME="Hospital"
+SALT="your salt for pasword hashing"
+```
+
+### 4. Run the Application
+```bash
+bal run
+```
+
+The services will be available at:
+- **Main Services:** `http://localhost:9090`
+
+### 5. Initialize the System 
+The system requires at least one Admin user before other operations.
+Use Postman (or another API client) to create the first user:
+```Services(post)
+POST http://localhost:9090/user/register
+```
+```Request boddy(json)
+{
+    "userData":{
+        "uid":"adminID",
+        "username": "AdminNAme",
+        "email":"admin@gmail.com",
+        "password":"111",
+        "role":"admin",
+        "phoneNumber":"0__-_______",
+        "city":"City",
+        "district":"district",
+        "profilepic":"http://"
+    },
+    "patientData":{
+        "pid":"adminID",
+        "DOB":"yyyy.mm.dd",
+        "gender":"sex"
+    }
+}
+```
 ---
 
 ## 💻 Development
