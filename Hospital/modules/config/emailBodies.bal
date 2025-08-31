@@ -197,3 +197,80 @@ public function sendConfirmationEmail(string otp) returns json {
     };
 }
 
+
+public function patientAppointmentConfirmationEmail(string patientName, string doctorName, string date, string 'time, int queueNumber, string url) returns json {
+    string subject = "Your Appointment is Confirmed with Dr. " + doctorName;
+    string message = string `
+        <html>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2 style="color: #2E86C1;">Halgoes Hospital - Appointment Confirmation</h2>
+            <p>Dear ${patientName},</p>
+            <p>Your appointment has been successfully scheduled and paid for. Please find the details below:</p>
+            <h3>Appointment Details:</h3>
+            <ul>
+              <li><b>Doctor:</b> Dr. ${doctorName}</li>
+              <li><b>Date:</b> ${date}</li>
+              <li><b>Time Slot:</b> ${'time}</li>
+              <li><b>Your Queue Number:</b> ${queueNumber}</li>
+            </ul>
+            <p>Please use the following link to join the video consultation at your scheduled time:</p>
+            <a href="${url}" style="display: inline-block; padding: 10px 20px; background-color: #27AE60; color: #ffffff; text-decoration: none; border-radius: 5px;">Join Meeting</a>
+            <p>Best Regards,<br><b>The Halgoes Hospital Team</b></p>
+          </body>
+        </html>`;
+
+    return {
+        "subject": subject,
+        "message": message
+    };
+}
+
+public function doctorAppointmentNotificationEmail(string doctorName, string patientName, string date, string 'time, int queueNumber, string url) returns json {
+    string subject = "New Appointment Scheduled with " + patientName;
+    string message = string `
+        <html>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2 style="color: #2E86C1;">Halgoes Hospital - New Appointment Notification</h2>
+            <p>Dear Dr. ${doctorName},</p>
+            <p>A new appointment has been scheduled with a patient. Please see the details below:</p>
+            <h3>Appointment Details:</h3>
+            <ul>
+              <li><b>Patient:</b> ${patientName}</li>
+              <li><b>Date:</b> ${date}</li>
+              <li><b>Time Slot:</b> ${'time}</li>
+              <li><b>Queue Number:</b> ${queueNumber}</li>
+            </ul>
+            <p>The video consultation link for this appointment is:</p>
+            <a href="${url}" style="display: inline-block; padding: 10px 20px; background-color: #1E88E5; color: #ffffff; text-decoration: none; border-radius: 5px;">Meeting Link</a>
+            <p>Best Regards,<br><b>Halgoes Hospital Administration</b></p>
+          </body>
+        </html>`;
+
+    return {
+        "subject": subject,
+        "message": message
+    };
+}
+
+// Add this function to the end of your utils.bal file
+
+public function patientPrescriptionNotificationEmail(string patientName, string doctorName, string prescriptionId) returns json {
+    string subject = "Your New Prescription from Dr. " + doctorName + " is Ready";
+    string message = string `
+        <html>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2 style="color: #2E86C1;">Halgoes Hospital - Prescription Notification</h2>
+            <p>Dear ${patientName},</p>
+            <p>A new prescription has been issued for you by Dr. ${doctorName}.</p>
+            <p>You can view the details and order your medication by logging into your patient portal.</p>
+            <p><b>Prescription ID:</b> ${prescriptionId}</p>
+            <p>Please follow your doctor's instructions carefully.</p>
+            <p>Best Regards,<br><b>The Halgoes Hospital Team</b></p>
+          </body>
+        </html>`;
+
+    return {
+        "subject": subject,
+        "message": message
+    };
+}

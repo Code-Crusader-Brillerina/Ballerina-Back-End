@@ -67,4 +67,8 @@ service /doctor on config:serverListener {
     resource function get financials/pending(http:Request req) returns http:Response|error {
         return routes:getPendingAppointmentRevenue(req);
     }
+
+    resource function get medicinesdoctor(http:Request req) returns http:Response|error {
+        return routes:getAllMedicinesForDoctor(req);
+    }
 }

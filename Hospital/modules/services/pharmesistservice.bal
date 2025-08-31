@@ -9,9 +9,12 @@ import ballerina/http;
         allowOrigins: ["http://localhost:5173"],
         allowCredentials: true,
         allowHeaders: ["Content-Type", "Authorization"],
-        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        exposeHeaders: ["X-CUSTOM-HEADER"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        maxAge: 3600
     }
 }
+
 service /pharmacy on config:serverListener {
 
     resource function post addInventory(http:Request req, @http:Payload utils:AddInventoryBody body) returns http:Response|error {

@@ -2,6 +2,7 @@ import Hospital.config;
 import Hospital.db;
 import Hospital.functions;
 import Hospital.utils;
+import ballerina/log;
 
 import ballerina/http;
 
@@ -104,17 +105,62 @@ public function updateAppoinmentStatus(http:Request req, utils:UpdateAppoinmentS
 }
 
 public function createPrescription(http:Request req, utils:Prescription body) returns http:Response|error {
-
+    // 1. Authorize the doctor
     var uid = config:autheriseAs(req, "doctor");
     if uid is error {
         return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
     }
-    body.did = uid.toString();
+    string doctorId = uid.toString();
+    body.did = doctorId;
+
+    // --- NEW: Validate Patient ID before proceeding ---
+    if body.pid == "" {
+        log:printError("Create Prescription failed: Patient ID (pid) was not provided in the request body.");
+        return config:createresponse(false, "Patient ID is required to create a prescription.", {}, http:STATUS_BAD_REQUEST);
+    }
+
+    // 2. Insert the prescription into the database
     var newPrescription = db:insertOneIntoCollection("prescriptions", body);
     if newPrescription is error {
         return config:createresponse(false, newPrescription.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
     }
-    return config:createresponse(true, "Prescription created succesfully.", body.toJson(), http:STATUS_OK);
+
+    // --- IMPROVED Email Sending Logic ---
+
+    // 3. Fetch patient and doctor details with specific checks
+    var patientUser = db:getDocument("users", {"uid": body.pid});
+    var doctorUser = db:getDocument("users", {"uid": doctorId});
+
+    // 4. Check if the patient user was found in the database
+    if patientUser is error || patientUser is () {
+        log:printError("Failed to send prescription email: Patient user could not be found for pid: " + body.pid);
+        // The prescription was still created, so we return a success message indicating the email failed.
+        return config:createresponse(true, "Prescription created, but the notification email could not be sent.", body.toJson(), http:STATUS_OK);
+    }
+
+    // 5. Check if the doctor user was found (less likely to fail, but good practice)
+    if doctorUser is error || doctorUser is () {
+        log:printError("Critical Error: The authenticated doctor's user details could not be found for did: " + doctorId);
+        return config:createresponse(true, "Prescription created, but the notification email could not be sent.", body.toJson(), http:STATUS_OK);
+    }
+
+    // 6. If both users are found, proceed to send the email
+    string patientName = check patientUser.username;
+    string patientEmail = check patientUser.email;
+    string doctorName = check doctorUser.username;
+    string prescriptionId = body.preId;
+
+    json emailContent = config:patientPrescriptionNotificationEmail(patientName, doctorName, prescriptionId);
+    var emailResult = functions:sendEmail(patientEmail, <string>check emailContent.subject, <string>check emailContent.message);
+    
+    if emailResult is error {
+        log:printError("Email service failed to send prescription notification.", 'error = emailResult, recipient = patientEmail);
+    } else {
+        log:printInfo("Prescription notification sent successfully to: " + patientEmail);
+    }
+
+    // 7. Return final success response
+    return config:createresponse(true, "Prescription created successfully. Notification sent.", body.toJson(), http:STATUS_CREATED);
 }
 
 public function getAllMedicinesDoctor(http:Request req) returns http:Response|error {
@@ -598,4 +644,30 @@ public function getPendingAppointmentRevenue(http:Request req) returns http:Resp
     };
 
     return config:createresponse(true, "Pending revenue fetched successfully.", financials.toJson(), http:STATUS_OK);
+}
+
+public function getAllMedicinesForDoctor(http:Request req) returns http:Response|error {
+    // 1. Authorize the user as a pharmacy.
+    var uid = config:autheriseAs(req, "doctor");
+    if uid is error {
+        return config:createresponse(false, uid.message(), {}, http:STATUS_UNAUTHORIZED);
+    }
+
+    // 2. Fetch all documents from the master 'medicines' collection.
+    var allMedicines = db:getAllDocumentsFromCollection("medicines");
+    if allMedicines is error {
+        return config:createresponse(false, allMedicines.message(), {}, http:STATUS_INTERNAL_SERVER_ERROR);
+    }
+
+    // 3. Create a simplified list containing only the ID and name for the frontend.
+    json[] simplifiedMedicines = [];
+    foreach json medicine in allMedicines {
+        json simplifiedItem = {
+            mediId: check medicine.mediId,
+            name: check medicine.name
+        };
+        simplifiedMedicines.push(simplifiedItem);
+    }
+
+    return config:createresponse(true, "Master medicine list fetched successfully.", simplifiedMedicines, http:STATUS_OK);
 }
